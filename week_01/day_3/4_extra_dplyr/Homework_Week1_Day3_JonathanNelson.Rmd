@@ -122,3 +122,37 @@ movies_budgets_edits <- movies_imputed %>%
 movies_budgets_edits
 ```
 
+# Extension: 
+
+# Question 1: Using case_when, create a new column called budget_type and label budgets as follows:
+
+#Budgets below 12 million as ‘Small budget’
+#Budgets between 12 and 40 million as ‘Medium budget’
+#Budgets 40 millions and above as ‘Big budget’
+#Save this into a new variable called movie_budgets.
+
+```{r}
+movie_budgets <- movies_budgets_edits %>%
+  select(budget) %>%
+  mutate(budget_type = case_when(
+    budget < 12000000 ~ "small budget",
+    budget > 12000000 | budget < 40000000 ~ "medium budget",
+    budget > 40000000 ~ "large budget"
+  ))
+
+movie_budgets
+```
+
+# Question 2: Take the original dataset with all the variables. Using across and where, summarise the number of missing values, first across all columns of type character, and then across all columns of type numeric.
+
+```{r}
+movies %>%
+  summarise(across(where(is.character), ~sum(is.na(.))))
+```
+
+```{r}
+movies %>%
+  summarise(across(where(is.numeric), ~sum(is.na(.))))
+```
+
+
