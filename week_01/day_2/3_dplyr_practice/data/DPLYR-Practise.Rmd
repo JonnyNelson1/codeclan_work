@@ -2,6 +2,10 @@
 title: "RStudio Lab"
 output: html_notebook
 ---
+```{r}
+library(tidyverse)
+```
+
 
 # Question 1
 

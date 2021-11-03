@@ -1,0 +1,115 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+```{r}
+library(janitor)
+```
+
+```{r}
+comms_data <- read_csv("telecom_data.csv",            
+ col_types = cols("monthly_charges" = col_number()))
+
+comms_data
+```
+
+```{r}
+comms_data %>%
+  filter(is.na(monthly_charges))
+```
+
+```{r}
+comms_data %>%
+  summarise(count = sum(is.na(monthly_charges)))
+```
+
+```{r}
+comms_data %>%
+  drop_na()
+
+#Drops the observations where N/A values are found
+```
+
+```{r}
+comms_data %>%
+  mutate(monthly_charges = coalesce(
+    monthly_charges,
+    mean(monthly_charges,
+    na.rm = TRUE)
+    ))
+
+# Is taking the N/A values in monthly_charges and making them the median/mean
+
+# Just replace mean with median, to get those different values.
+```
+
+# Task 1: 
+
+```{r}
+comms_data %>%
+  filter(is.na(total_charges))
+```
+
+```{r}
+comms_data %>%
+  summarise(count != as.numeric(total_charges))
+```
+
+```{r}
+class("total_charges")
+```
+
+```{r}
+total_charges_replaces <- comms_data %>%
+  mutate(
+    total_charges = na_if(total_charges, "na"),
+    total_charges = na_if(total_charges, "N/A")
+  )
+
+total_charges_replaces
+
+# Removes the values "na" and "N/A" from the data set
+
+# Or can code as "na|N/A"
+```
+
+```{r}
+total_charges_replaces %>%
+  mutate(total_charges = as.numeric(total_charges))
+
+# changes "total_charges" from character to numeric
+```
+
+# Task 2
+
+```{r}
+payment_method_replaces <- comms_data %>%
+  summarise(total_charges)
+
+payment_method_replaces
+```
+
+```{r}
+comms_data %>%
+  class(payment_method)
+```
+
+```{r}
+payment_method_replaced <- total_charges_replaces %>% 
+  mutate(
+    payment_method = na_if(payment_method, "NA"),
+    payment_method = na_if(payment_method, "--")
+    )
+payment_method_replaced
+```
+
+```{r}
+payment_new_category <- payment_method_replaced %>%
+  mutate(payment_method = coalesce(payment_method, "unavaliable"))
+
+payment_new_category
+```

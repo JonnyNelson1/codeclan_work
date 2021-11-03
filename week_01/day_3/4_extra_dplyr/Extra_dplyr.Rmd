@@ -1,0 +1,106 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+new_coders <- read_csv("data/new_coders.csv")
+```
+
+```{r}
+new_coders %>%
+  group_by(reasons_to_code) %>%
+  mutate(
+    avg_expected_earnings = mean(expected_earn),
+    diff_from_avg = expected_earn - avg_expected_earnings) %>%
+  select(reasons_to_code, avg_expected_earnings,everything()) %>%
+  arrange(desc(expected_earn))
+
+# everything() returns all other columns  after . . . 
+
+# when you summarie data, the group_by () is still in effect.
+
+# Can use the ungroup() function to peice apart again.
+  
+```
+# Task 1:
+
+```{r}
+new_coders %>%
+  mutate(average_age_for_gender = mean(age)) %>%
+  group_by(gender) %>%
+  select(age, gender, average_age_for_gender, everything()) %>%
+
+```
+
+```{r}
+new_coders %>%
+  group_by(reasons_to_code) %>%
+  mutate(
+    avg_expected_earn = mean(expected_earn)
+  ) %>%
+  ungroup() %>%
+  slice_max(expected_earn, n = 5)
+```
+
+```{r}
+library(CodeClanData)
+```
+
+```{r}
+chinesemeal %>%
+  group_by(FoodType) %>%
+  mutate(
+    last_years_calories = lag(CaloriesPerDay, n = 5),
+    diff_in_cal = CaloriesPerDay - last_years_calories,
+    next_year_calories = lead(CaloriesPerDay)
+  )
+
+# Lag() and Lead() Functions can be used to calculate moving averages
+```
+
+```{r}
+deaths <- read_csv("data/character-deaths.csv")
+
+deaths
+```
+
+```{r}
+deaths %>%
+  mutate(across(book1_GoT:book5_DwD, as.logical))
+```
+
+```{r}
+deaths %>%
+  group_by(allegiances) %>%
+  summarise(across(book1_GoT:book5_DwD, sum))
+```
+
+```{r}
+deaths %>%
+  summarise(across(everything(), ~sum(is.na(.))))
+
+# Summarise across the whole data frame, the amount of N/A values
+```
+
+```{r}
+deaths %>%
+  summarise(across(everything(), ~sum(is.na(.))))
+```
+
+```{r}
+death %>%
+  group_by(allegiances)
+```
+
+# Final Task of the Day
+
+```{r}
+new_coders %>%
+  mutate(across(where(is.character),as.factor))
+```
+
