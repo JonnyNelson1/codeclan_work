@@ -146,11 +146,11 @@ ae_clean %>%
 ```{r}
 ae_clean %>%
   select(date, attendance_greater8hrs, department_type, hbt) %>%
-  filter(date >= "2017-07-01") %>%
+  # filter(date >= "2017-07-01") %>%
   ggplot() +
-  geom_col(aes(x = date, y =  attendance_greater8hrs, fill = hbt)) +
-  ggtitle("Time Series for Number of Attendances") +
-  labs(x = "Date", y = "Number of Attendances")
+  geom_col(aes(x = date, y =  attendance_greater8hrs, fill = department_type)) +
+  ggtitle("Time Series for Number of Attendances over 8 Hours") +
+  labs(x = "Date", y = "Number of Attendances over 8 Hours")
 ```
 
 
@@ -158,17 +158,12 @@ ae_clean %>%
 
 ```{r}
 ae_clean %>%
-  group_by(date) %>%
-  tsibble()
-
-ae_squish <- ae_clean %>%
-  mutate(month = month(date, label = TRUE, abbr = FALSE)) %>%
-  group_by(date) %>%
-  summarise(number_of_attendances = sum(number_of_attendances_aggregate)) %>%
-  tsibble() 
-
-ae_squish %>%
-  gg_season()
+  select(date, attendance_greater12hrs, department_type, hbt) %>%
+  # filter(date >= "2017-07-01") %>%
+  ggplot() +
+  geom_col(aes(x = date, y =  attendance_greater12hrs, fill = department_type)) +
+  ggtitle("Time Series for Number of Attendances over 12 Hours") +
+  labs(x = "Date", y = "Number of Attendances over 12 Hours")
 ```
 
 ## To Do List
