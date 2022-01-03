@@ -141,12 +141,12 @@ ae_clean %>%
   labs(x = "Date", y = "Number of Attendances")
 ```
 
-# Attendances over 8 & 12 hours
+# Attendances over 8 Hours
 
 ```{r}
 ae_clean %>%
   select(date, attendance_greater8hrs, department_type, hbt) %>%
-  # filter(date >= "2017-07-01") %>%
+  filter(date >= "2017-07-01") %>%
   ggplot() +
   geom_col(aes(x = date, y =  attendance_greater8hrs, fill = department_type)) +
   ggtitle("Time Series for Number of Attendances over 8 Hours") +
@@ -154,7 +154,7 @@ ae_clean %>%
 ```
 
 
-# Transforming the tibble to a tsibble
+# Time Series for Number of Attendances over 12 Hours
 
 ```{r}
 ae_clean %>%
@@ -165,6 +165,54 @@ ae_clean %>%
   ggtitle("Time Series for Number of Attendances over 12 Hours") +
   labs(x = "Date", y = "Number of Attendances over 12 Hours")
 ```
+
+```{r}
+# Need to convert the ae_clean into a tsibble
+
+ae_tsibble <- ae_clean %>%
+  tsibble(key = NULL, index = date)
+
+# Cannot make into a tsibble as there are duplicate entries for time and cannot collapse the data.
+```
+
+# Cannot make into a tsibble
+
+# Attendance Over 12 Hours per Year
+
+```{r}
+ae_clean <- ae_clean %>%
+  mutate(year_month = as.yearmon(ae_clean$date))
+
+ae_clean %>%
+  filter(year_month >= "Jan 2020") %>%
+  group_by(date) %>%
+  ggplot(aes(x = month(date,
+                       label = TRUE,
+                       abbr = TRUE),
+             y = attendance_greater12hrs,
+         group = factor(year(date)),
+         colour = factor(year(date))
+         )) +
+  geom_line() +
+  geom_point() +
+  labs(x = "Month",
+       y = "Attendance Over 12 Hours",
+       colour = "Year") +
+  theme_classic()
+
+```
+
+
+```{r}
+ae_clean %>%
+  select(date, attendance_greater12hrs, department_type, hbt) %>%
+  # filter(date >= "2017-07-01") %>%
+  ggplot() +
+  geom_col(aes(x = date, y =  attendance_greater12hrs, fill = department_type)) +
+  ggtitle("Time Series for Number of Attendances over 12 Hours") +
+  labs(x = "Date", y = "Number of Attendances over 12 Hours")
+```
+
 
 ## To Do List
 
