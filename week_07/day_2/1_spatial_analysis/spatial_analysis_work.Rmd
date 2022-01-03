@@ -1,0 +1,378 @@
+---
+title: "spatial_analysis"
+author: "Jonny Nelson"
+date: "14/12/2021"
+output: html_document
+---
+
+# Spatial Data
+
+```{r}
+library(sf)
+library(tidyverse)
+library(janitor)
+```
+
+# Spatial Data is special - while encoded as numbers - these numbers actually have a special meaning
+
+spatial vectors (non R-specific)
+
+## 3 main types
+
+- point data -> POINT (1,4)
+- line -> LINE STRING ((1,4)(4,5))
+- polygon -> POLYGON ((x,y)(x,y)(x,y)(x,y)(x,y))
+
+## Examples for 3 main types
+
+- points (stations, wells)
+- lines (roads, rivers)
+- polygon (council areas, lakes)
+
+## lat long columns - or load shapefiles
+
+```{r}
+library(sf) # sf = simple features
+```
+
+# a feature is just a geometry
+
+```{r}
+north_carolina <- st_read(system.file("shape/nc.shp", package = "sf"))
+```
+
+```{r}
+north_carolina %>%
+  as_tibble()
+```
+
+```{r}
+nc_geo <- st_geometry(north_carolina)
+
+nc_geo[[1]]
+```
+```{r}
+class(north_carolina)
+```
+
+# Plotting geometries
+
+```{r}
+plot(north_carolina["AREA"])
+```
+
+```{r}
+# `st_as_sf()` - convert non-sf objects to sf data frames
+```
+
+```{r}
+# first row, "AREA" column
+
+plot(north_carolina[1, "AREA"])
+```
+
+```{r}
+plot(north_carolina["CNTY_ID"])
+```
+
+# ggplot and sf
+
+`geom_sf()`
+
+```{r}
+north_carolina %>%
+  ggplot() +
+  geom_sf(aes(fill = SID74), colour = "black") +
+  theme_bw()
+```
+
+# Taskles
+
+```{r}
+north_carolina %>%
+  ggplot() +
+  geom_sf(aes(fill = CNTY_ID), colour = "red", size = 0.1) +
+  scale_fill_continuous(type = "viridis") +
+  theme_void()
+```
+
+```{r}
+library(rgeos)
+library(rnaturalearth)
+library(rnaturalearthdata)
+```
+
+# Using rnaturalearth package we can inmport boundaires of countries at various levels
+
+```{r}
+world <- ne_countries(scale = "medium", returnclass = "sf")
+
+class(world)
+```
+
+```{r}
+world %>%
+  as_tibble() %>%
+  head(5)
+```
+
+```{r}
+world %>%
+  ggplot() +
+  geom_sf() +
+  labs(x = "longitude", y = "latitude", title = "World Map")
+```
+
+```{r}
+world %>%
+  ggplot() +
+  geom_sf(aes(fill = pop_est)) +
+  scale_fill_viridis_c(trans = "sqrt")
+```
+
+```{r}
+world %>%
+  ggplot() +
+  geom_sf(aes(fill = gdp_md_est)) +
+  scale_fill_gradient2()
+```
+
+```{r}
+world %>% 
+  filter(continent != "Antarctica") %>%
+  ggplot() +
+  geom_sf(aes(fill = continent))
+```
+
+with the world dataframe, we can filter out different countries
+
+```{r}
+# unique(world$sovereignt)
+
+country_italy <- world %>%
+  filter(name == "Italy")
+
+# Plot just Italy
+
+country_italy %>%
+  ggplot() +
+  geom_sf() +
+  labs(x = "Longitude", y = "Longitude")
+```
+
+# Pick a country filter and plot it
+
+```{r}
+unique(world$sovereignt)
+
+country_liechtenstein <- world %>%
+  filter(name == "Liechtenstein")
+
+# Plot just Liechtenstein
+
+country_liechtenstein %>%
+  ggplot() +
+  geom_sf() +
+  labs(x = "Longitude", y = "Longitude")
+```
+
+## Zooming in on a particular parts of the world
+
+- We can subset our graph by limiting the x and y range  `coord_sf()`
+
+```{r}
+world %>%
+  ggplot() +
+  geom_sf() +
+  coord_sf(xlim = c(-102.15, -74.12), ylim = c(7.65, 33.97), expand = FALSE)
+```
+
+# Add informative labels
+
+- we nedd to tell ggplot where top put the labels 
+- we need to calucalte where we want to put the labels
+(centre of the feature)
+- we need to calculate the centres (centroids)
+
+```{r}
+world %>%
+  mutate(centres = st_centroid(st_make_valid(geometry))) %>%
+  as_tibble() %>%
+  select(name, centres)
+```
+```{r}
+# mutated_geometries
+
+world_with_centres <- world %>%
+  mutate(centres = st_centroid(st_make_valid(geometry))) %>%
+  mutate(lat = st_coordinates(centres)[,1],
+         long = st_coordinates(centres)[,2])
+```
+
+```{r}
+# centre_geometries
+
+centre_geo <- world %>%
+  mutate(centres = st_centroid(st_make_valid(geometry))) %>%
+  select(centres)
+```
+
+```{r}
+world_with_centres %>%
+  ggplot() +
+  geom_sf() +
+  geom_text(aes(x = lat, y = long, label = name), colour = "darkblue", fontface = "bold", check_overlap = TRUE, size = 2.5) +
+  coord_sf(xlim = c(-102.15, -74.12), ylim = c(7.65, 33.97), expand = FALSE) 
+```
+
+# We can add additonal information using annotate
+
+- add one that says: Gulf of Mexico
+
+```{r}
+world_with_centres %>%
+  ggplot() +
+  geom_sf() +
+  geom_text(aes(x = lat, y = long, label = name),
+            colour = "darkblue",
+            fontface = "bold",
+            check_overlap = TRUE,
+            size = 2.5) +
+  annotate(geom = "text", x = -90, y = 26, label = "Gulf Of Mexico", size = 3, fontface = "bold") +
+  coord_sf(xlim = c(-102.15, -74.12), ylim = c(7.65, 33.97),
+           expand = FALSE) 
+```
+
+```{r}
+world_with_centres %>%
+  ggplot() +
+  geom_sf() +
+  geom_text(aes(x = lat, y = long, label = name, colour = "seagreen"),
+            colour = "darkblue",
+            fontface = "bold",
+            check_overlap = TRUE,
+            size = 2.5) +
+  annotate(geom = "text", x = -90, y = 26, label = "Gulf Of Mexico", size = 3, fontface = "bold") +
+  coord_sf(xlim = c(6,12), ylim = c(44,50),
+           expand = FALSE) 
+```
+
+wgs84 (1984) - how do we put a sphere on a rectangle - need another argument to make it work for smaller long and lats.
+
+
+```{r}
+world_with_centres %>% 
+  ggplot() +
+  geom_sf(aes(fill = name), show.legend = F) +
+  geom_text(aes(lat, long, label = name), size = 2.5) +
+  annotate(geom = "text", x = -90, y = 26, label = "Gulf of Mexico",
+           size = 4, fontface = "italic",
+           check_overlap = TRUE) +
+  coord_sf(xlim = c(-110, -60), ylim = c(8, 35), expand = T) +
+  theme_minimal() 
+```
+
+# interactive Maps with Leaflet
+
+```{r}
+library(leaflet)
+
+leaflet() %>%
+  addTiles() %>% # basemap
+  addMarkers(lng = 174.768, lat = -36.852, popup = "The Birthplace of R")
+```
+
+# Can get some spatial data from the web-a-roo
+- turn it into the correct format
+- visualise it using leaflet
+
+```{r}
+library(jsonlite)
+```
+
+```{r}
+colorado_data_url <- "https://data.colorado.gov/resource/j5pc-4t32.json?&county=BOULDER"
+```
+
+```{r}
+head(readLines(colorado_data_url))
+```
+
+jsonlite package has alot of functions to help work with json data
+
+json is like a list of lists in R - sometimes we need to recursively sift through to extract the relevant data
+
+```{r}
+colorado_water <- fromJSON(colorado_data_url) %>%
+  jsonlite::flatten(recursive = TRUE)
+```
+
+```{r}
+colorado_water %>%
+  select(starts_with("location"))
+
+# need to do some wrangling before the plotting
+```
+
+```{r}
+colorado_water_clean <- colorado_water %>%
+  select(-location.needs_recoding) %>%
+  mutate(across(starts_with("location"), as.numeric)) %>%
+  filter(!is.na(location.latitude), !is.na(location.longitude))
+```
+
+# Visualise it with leaflet
+
+```{r}
+colorado_water_clean %>%
+leaflet() %>%
+addTiles() %>%
+addCircleMarkers(lng = ~location.longitude,
+                 lat = ~location.latitude,
+                 radius = ~amount/10)
+
+# incidences of surface water in and around boulder colorado
+```
+
+# Clustering
+
+Lets have a look at AddMarkers
+
+```{r}
+colorado_water_clean %>%
+leaflet() %>%
+addTiles() %>%
+addMarkers(lng = ~location.longitude,
+                 lat = ~location.latitude,
+                 )
+```
+
+We can add clustering options
+
+```{r}
+colorado_water_clean %>%
+leaflet() %>%
+addTiles() %>%
+addMarkers(lng = ~location.longitude,
+           lat = ~location.latitude,
+           clusterOptions = markerClusterOptions()
+           )
+```
+
+# Leaflet in Shiny
+
+```{r}
+whiskey <-CodeClanData::whisky %>%
+  rename(long = Latitude,
+         lat = Longitude)
+
+head(whiskey)
+```
+
+```{r}
+whiskey %>%
+  leaflet() %>%
+  addTiles() %>%
+  addCircleMarkers(lat = ~lat, lng = ~long, popup = ~Distillery)
+```
+

@@ -1,0 +1,200 @@
+---
+title: "Combining Events"
+author: "Jonny Nelson"
+date: "06/12/2021"
+output: html_document
+---
+
+
+```{r}
+library(janitor)
+```
+
+```{r}
+s_four_coins <- tosscoin(4) %>%
+  mutate(row = row_number())
+
+s_four_coins
+```
+
+```{r}
+s_four_coins <- s_four_coins %>%
+  mutate(num_heads = rowSums(.== "H"))
+
+s_four_coins
+```
+```{r}
+s_at_least_two_heads <- s_four_coins %>%
+  filter(num_heads >= 2)
+
+prob_two_plus_heads <- nrow(s_at_least_two_heads)/nrow(s_four_coins)
+
+prob_one_or_fewer_heads <- abs(prob_two_plus_heads - 1)
+```
+
+# Taskles
+
+```{r}
+s_four_coins <- s_four_coins %>%
+  mutate(num_tails = rowSums(.== "T"))
+
+s_at_least_one_head_and_one_tail <- s_four_coins %>%
+  filter(num_heads >= 1 & num_tails >= 1)
+
+prob_one_head_and_one_tail <- nrow(s_at_least_one_head_and_one_tail)/nrow(s_four_coins)
+  
+```
+
+```{r}
+s_four_coins %>%
+  filter(num_heads >= 3 & num_tails >= 2) %>%
+  summarise(prob = n()/ nrow(s_four_coins))
+
+# probability is zero when these are mutually exclusive 
+```
+
+```{r}
+# A: {2,4,6}
+# B: {4,5}
+
+# Probability that A or B occurs.
+
+# A and B are seperate dice rowls
+
+# Therefore (AUB) = {2,4,5,6}
+
+s_two_dice <- rolldie(2)
+
+s_two_dice %>%
+  filter(X1 %% 2 == 0 | X2 %in% c(4,5)) %>%
+  summarise(prob = n() / nrow(s_two_dice))
+```
+
+# Taskles
+
+```{r}
+first_die_even <- s_two_dice %>%
+  filter(X1 %% 2 == 0) %>%
+  summarise(prob = n() / nrow(s_two_dice)) %>%
+  pull()
+
+second_die_five <- s_two_dice %>%
+  filter(X2 == 5) %>%
+  summarise(prob = n() / nrow(s_two_dice)) %>%
+  pull()
+
+both_conditions <- s_two_dice %>%
+  filter(X1 %% 2 == 0 & X2 == 5) %>%
+  summarise(prob = n() / nrow(s_two_dice)) %>%
+  pull()
+
+pr_union <- first_die_even + second_die_five - both_conditions
+
+pull(pr_union)
+```
+
+
+# Conditional Probabilities
+
+
+```{r}
+colour_blindos <- read_csv("data/colour_blindness.csv")
+```
+
+```{r}
+table <- colour_blindos %>%
+  tabyl(class, survived)
+
+table
+```
+
+```{r}
+table <- table %>%
+  adorn_totals(where = c("row", "col"))
+
+table
+```
+
+```{r}
+table <- table %>%
+  adorn_percentages(denominator = "all") %>%
+  adorn_title()
+
+table
+```
+
+```{r}
+# Probability of being female
+
+prob_female <- colour_blindos %>%
+  summarise(prob = sum(bio_sex == "female") / n())
+prob_female
+```
+
+```{r}
+# Probability of being male
+
+prob_male <- colour_blindos %>%
+  summarise(prob = sum(bio_sex == "male") / n())
+prob_male
+```
+
+```{r}
+# Probability of being cblind
+
+prob_cblind <- colour_blindos %>%
+  summarise(prob = sum(cblind == TRUE) / n())
+prob_cblind
+```
+
+```{r}
+prob_non_cblind <- (1 - prob_cblind)
+
+# or 
+
+# prob_not_cb <- cb %>%
+  # summarise(prob = sum(!cblind) / n())
+# prob_not_cb
+
+```
+
+```{r}
+prob_female_and_cblind <- colour_blindos %>%
+  filter(bio_sex == "female" & cblind == TRUE) %>%
+  summarise(prob = n()/ nrow(colour_blindos)) %>%
+  pull()
+```
+
+```{r}
+prob_cblind * prob_female
+```
+
+```{r}
+prob_male_and_cblind <- colour_blindos %>%
+  filter(bio_sex == "male" & cblind == TRUE) %>%
+  summarise(prob = n()/ nrow(colour_blindos)) %>%
+  pull()
+```
+
+```{r}
+prob_male * prob_cblind
+```
+
+# Calculating Conditional Probability
+
+```{r}
+prob_cb_given_female = colour_blindos %>%
+  filter(bio_sex == "female") %>%
+  summarise(prob = sum(cblind) / n())
+
+prob_cb_given_female
+```
+
+```{r}
+prob_cb_given_male = colour_blindos %>%
+  filter(bio_sex == "male") %>%
+  summarise(prob = sum(cblind) / n())
+
+prob_cb_given_male
+```
+

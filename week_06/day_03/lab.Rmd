@@ -1,0 +1,238 @@
+---
+title: "Lab"
+author: "Jonny Nelson"
+date: "08/12/2021"
+output: html_document
+---
+
+```{r}
+library(janitor)
+library(e1071)
+library(prob)
+library(tidyverse)
+```
+
+```{r}
+# Question 1 - Loading in the data
+
+health_data <- read_csv("2_sampling_minilab/data/heart.csv") %>%
+  clean_names()
+```
+
+```{r}
+# Quesiton 2 - Histogram "thalach"
+
+unique(health_data$thalach)
+
+health_data %>%
+  ggplot() +
+  aes(x = thalach) +
+  geom_histogram(col = "white", fill = "steel blue")
+
+# Normal distribution but left skewed
+```
+
+```{r}
+# Quesiton 3 - Barplot of "exang"
+
+unique(health_data$exang)
+
+health_data %>%
+  ggplot() +
+  aes(x = exang) +
+  geom_bar(col = "white", fill = "steel blue")
+
+# More patients do not display exercise induced angina
+```
+
+```{r}
+# Question 4 - population parameters
+
+# Summary table - sample statistics/ point estimate
+
+summary_population <- health_data %>%
+  summarise(
+    mean_thalach = mean(thalach),
+    prob_exang = sum(exang == 1) / n(),
+    sd_thalach = sd(thalach)
+  )
+
+summary_population
+```
+
+```{r}
+# Single sample of 50 patients
+
+library(infer)
+
+sample_50 <- health_data %>%
+  rep_sample_n(
+    size = 50,
+    reps = 1
+  )
+
+sample_50
+
+summary_sample <- sample_50 %>%
+  ungroup() %>%
+  summarise(
+    mean_thalach = mean(thalach),
+    prob_exang = sum(exang == 1) / n(),
+    sd_thalach = sd(thalach)
+  )
+
+summary_sample
+```
+```{r}
+# Question 5 - sampling errors
+
+summary_sample - summary_population
+```
+
+```{r}
+# Question 6 - sample_rep_50
+
+sample_rep_50 <- health_data %>%
+  rep_sample_n(
+    size = 50,
+    reps = 5000
+  ) %>%
+  
+  summarise(
+    mean_thalach = mean(thalach),
+    prob_exang = sum(exang == 1) / n(),
+    sd_thalach = sd(thalach)
+  )
+
+sample_rep_50
+
+```
+
+```{r}
+# Question 7 - sampling distributions of rep_sample_50
+
+# see answer above
+```
+
+```{r}
+# Question 8 - Visualize mean_thalach and prob_exang on distributions
+
+
+# Mean Thalach Distribution
+
+mean_thalach_distribution <- sample_rep_50 %>%
+  ggplot() +
+  aes(x = mean_thalach) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7) 
+
+mean_thalach_distribution
+
+
+# Probability Exang Distribution
+
+prob_exang_distribution <- sample_rep_50 %>%
+  ggplot() +
+  aes(x = prob_exang) +
+  geom_bar(col = "white", fill = "steel blue") 
+
+prob_exang_distribution
+```
+
+```{r}
+# Question 9 - standard errors obtain
+
+standard_error <- sample_rep_50 %>%
+  summarise(
+    se_thalach = sd(mean_thalach),
+    se_exang = sd(prob_exang)
+  )
+
+standard_error
+```
+
+```{r}
+# Question 10 - sample sizes of 100 and 200
+
+# Sample size of 100
+
+sample_rep_100 <- health_data %>%
+  rep_sample_n(
+    size = 100,
+    reps = 5000
+  ) %>%
+  
+  summarise(
+    mean_thalach = mean(thalach),
+    prob_exang = sum(exang == 1) / n(),
+    sd_thalach = sd(thalach)
+  )
+
+sample_rep_100
+
+
+standard_error_100 <- sample_rep_100 %>%
+  summarise(
+    se_thalach = sd(mean_thalach),
+    se_exang = sd(prob_exang)
+  )
+
+standard_error_100
+
+
+
+# Sample size of 200
+
+
+
+sample_rep_200 <- health_data %>%
+  rep_sample_n(
+    size = 200,
+    reps = 5000
+  ) %>%
+  
+  summarise(
+    mean_thalach = mean(thalach),
+    prob_exang = sum(exang == 1) / n(),
+    sd_thalach = sd(thalach)
+  )
+
+sample_rep_200
+
+
+standard_error_200 <- sample_rep_200 %>%
+  summarise(
+    se_thalach = sd(mean_thalach),
+    se_exang = sd(prob_exang)
+  )
+
+standard_error_200
+
+# Standard errors get smaller as the sample size increases
+
+
+# Sample size of 303
+
+sample_rep_303 <- health_data %>%
+  rep_sample_n(
+    size = 303,
+    reps = 5000
+  ) %>%
+  
+  summarise(
+    mean_thalach = mean(thalach),
+    prob_exang = sum(exang == 1) / n(),
+    sd_thalach = sd(thalach)
+  )
+
+sample_rep_303
+
+
+standard_error_303 <- sample_rep_303 %>%
+  summarise(
+    se_thalach = sd(mean_thalach),
+    se_exang = sd(prob_exang)
+  )
+
+standard_error_303
+```
+

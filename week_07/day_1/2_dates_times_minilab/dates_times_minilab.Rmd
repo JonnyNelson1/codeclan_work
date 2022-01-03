@@ -1,0 +1,106 @@
+---
+title: "Dates and times minilab"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.align = 'center')
+```
+
+
+# Dates & Times Lab
+
+This lab will let us practice what we've learned today using a few different approaches. 
+
+**Duration - 1.5 hours** 
+
+
+# MVP
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+
+
+
+*** 
+
+
+```{r, echo = FALSE, out.width='50%'}
+knitr::include_graphics("images/tdf_logo.jpeg")
+```
+
+
+## Question 1 
+
+Load in the `tour_de_france.csv` dataset and have a look at it. What issues do you see with the dates in this? 
+
+<br>
+
+## Question 2
+
+Fix the date columns in the dataset so they are in date ISO format.  
+
+<br>
+
+## Question 3
+
+Now do a data check. Tour de France begins in June or July (usually, COVID was the exception). Create a month column which checks whether or not this is consistent and you only have these months in the start_date options. 
+
+Which month is most popular for starting? 
+
+
+<br>
+
+## Question 4 
+
+What day of the week is most common for the tour to start?
+
+
+<br>
+
+## Question 5 
+
+Add a date column to your dataset that captures which date each tour finished? Hint: It lasts 23 days.
+
+
+
+<br>
+
+## Question 6
+
+What age was each rider when they started the tour? Hint: you'll need to calculate the time period between when the race started, and when they were born. You can then format this (recap the "periods" section in the classnotes).
+
+
+<br>
+
+
+## Question 7
+
+Let's say a plane leaves Sydney Australia at 2.15pm on the 7th August 2018, and arrives at 5.40am on the 8th August 2018 in London. Create these two dates with the appropriate time zones.  
+
+<br>
+
+## Question 8
+
+Work out how long the duration between take off and landing is.
+
+
+<br>
+
+## Question 9
+
+Say you left London at 6.20am on the 10th August 2018, and the total flight time including stop-overs was 28 hours and 46 minutes. At what time and date would you arrive in Sydney, Australia?     
+
+
+<br>
+

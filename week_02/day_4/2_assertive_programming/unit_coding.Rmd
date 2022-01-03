@@ -1,0 +1,144 @@
+---
+title: "Assertive Programming"
+output: html_notebook
+---
+
+```{r}
+
+is_leap_year <- function(year){
+  
+  if(year %% 100 == 0){
+    if (year %% 400 == 0){
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  }
+  if(year %% 4 == 0){
+    return(TRUE)
+  } else{
+    return(FALSE)
+  }
+}
+
+is_leap_year(2012)
+
+```
+
+```{r}
+library(testthat)
+```
+
+```{r}
+expect_equal()
+expect_error()
+```
+
+```{r}
+a <- 10
+```
+
+```{r}
+expect_equal(a, 11)
+```
+
+```{r}
+test_that("Real Leap Year Return True", {
+  expect_equal(is_leap_year(2012), TRUE)
+  expect_equal(is_leap_year(2000), TRUE)
+  expect_equal(is_leap_year(1999), FALSE)
+})
+```
+```{r}
+test_dir("day_4")
+
+# Should find the R Script and use it to do the test
+```
+
+```{r}
+test_that("Character input returns an error", {
+  expect_error(is_leap_year("year"))
+  expect_error(is_leap_year(FALSE))
+  
+  
+# TRUE = 1
+# FALSE = 0
+  
+# TRUE %% 100 = 0 - FALSE
+  
+})
+```
+
+```{r}
+
+is_leap_year <- function(year){
+  
+  if(!is.numeric(year)){
+    stop("Non-Numeric Value")
+  }
+  
+  if(year %% 100 == 0){
+    if (year %% 400 == 0){
+      return(TRUE)
+    } else {
+      return(FALSE)
+    }
+  }
+  if(year %% 4 == 0){
+    return(TRUE)
+  } else{
+    return(FALSE)
+  }
+}
+
+# is_leap_year("owe")
+
+```
+
+```{r}
+is_leap_year("owe")
+
+# Now spits out a custom error message.
+```
+
+```{r}
+
+# Attempted answer does not work
+
+test_that("Is not leap year",{
+  expect_error(is_leap_year(2017), TRUE)
+  expect_error(is_leap_year(1900), TRUE)
+})
+```
+
+```{r}
+# Actual Answer
+
+test_that("Real leap year return true",{
+  expect_equal(is_leap_year(2017), F)
+  expect_equal(is_leap_year(1900), F)
+  })
+```
+
+```{r}
+num1 <- 5
+num2 <- (sqrt(5))^2
+
+expect_equal(num1, num2)
+
+expect_identical(num1, num2)
+
+```
+
+```{r}
+expect_gte(2, 3)
+```
+
+```{r}
+string <- "is there a match?"
+
+expect_match(string, "thEre a", ingore.case = TRUE)
+
+# case sensitive
+```
+

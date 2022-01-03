@@ -1,0 +1,226 @@
+---
+title: "Time Series"
+author: "Jonny Nelson"
+date: "13/12/2021"
+output: html_document
+---
+
+# Time Series
+
+ - continuous data
+ - time is the primary axis
+ - append rather than replace
+ 
+```{r}
+library(tsibble)
+library(tsibbledata)
+library(feasts)
+library(fable)
+```
+ 
+```{r}
+head(vic_elec)
+```
+
+```{r}
+index_var(vic_elec)
+
+key_vars(vic_elec)
+
+interval(vic_elec)
+```
+
+```{r}
+nyc_bikes
+
+key_vars(nyc_bikes)
+```
+
+```{r}
+vic_elec %>%
+  select(Demand, Temperature, Holiday) %>%
+  filter(Holiday == TRUE)
+
+# Doesn't let you drop the Time as its the key column
+```
+
+```{r}
+vic_elec %>%
+  filter_index("2012-01")
+```
+
+```{r}
+vic_years <- vic_elec %>%
+  mutate(year = lubridate::year(Date))
+```
+
+```{r}
+vic_years %>%
+  index_by(year) %>%
+  summarise(mean_temp = mean(Temperature))
+
+# index_by is the tsibble version of a group by
+```
+
+```{r}
+vic_elec %>% distinct(Holiday)
+```
+
+```{r}
+vic_elec %>%
+  filter(Holiday == FALSE) %>%
+  ggplot() +
+  aes(x = Time, y = Temperature) +
+  geom_line()
+
+# Messy graph as it looks like the batman symbol
+```
+
+# Daily Aggregated Data
+
+```{r}
+vic_elec_01 <- vic_elec %>%
+  index_by(Date) %>%
+  summarise(mean_temp = mean(Temperature))
+
+vic_elec_01 %>%
+  # filter(Holiday == FALSE) %>%
+  ggplot() +
+  aes(x = Date, y = mean_temp) +
+  geom_line()
+
+
+```
+
+# Monthly Aggregated Data
+
+```{r}
+vic_elec %>%
+  mutate(month = month(Date, label = TRUE)) %>% 
+  index_by(month) %>% 
+  summarise(mean_temp = mean(Temperature)) %>% 
+  ggplot(aes(x = month, y = mean_temp)) +
+  geom_line(group = 1) 
+```
+
+```{r}
+library(slider)
+
+# calculate a rolling window
+# the . in .f corresponds to the current window in the data, i.e. each subset
+elec_rolling <- vic_elec %>% 
+  mutate(
+    temp_moving_avg = slide_dbl(
+      .x = Temperature, 
+      .f = ~ mean(., na.rm = TRUE),
+      .before = 1000,
+      .after = 1000
+    )
+  )
+
+elec_rolling
+
+# plot the data 
+ggplot(elec_rolling) + 
+  geom_line(aes(x = Date, y = Temperature), colour = "grey") + 
+  geom_line(aes(x = Date, y = temp_moving_avg), colour = "red")
+```
+
+```{r}
+# Before and After to 100
+
+# Answer = More volatile trend
+
+
+# calculate a rolling window
+# the . in .f corresponds to the current window in the data, i.e. each subset
+elec_rolling <- vic_elec %>% 
+  mutate(
+    temp_moving_avg = slide_dbl(
+      .x = Temperature, 
+      .f = ~ mean(., na.rm = TRUE),
+      .before = 100,
+      .after = 100
+    )
+  )
+
+elec_rolling
+
+# plot the data 
+ggplot(elec_rolling) + 
+  geom_line(aes(x = Date, y = Temperature), colour = "grey") + 
+  geom_line(aes(x = Date, y = temp_moving_avg), colour = "red")
+```
+
+```{r}
+# .complete = TRUE
+
+# No moving average for the beginning and the end - its in the warning message.
+
+# calculate a rolling window
+# the . in .f corresponds to the current window in the data, i.e. each subset
+elec_rolling <- vic_elec %>% 
+  mutate(
+    temp_moving_avg = slide_dbl(
+      .x = Temperature, 
+      .f = ~ mean(., na.rm = TRUE),
+      .before = 1000,
+      .after = 1000,
+      .complete = TRUE
+    )
+  )
+
+elec_rolling
+
+# plot the data 
+ggplot(elec_rolling) + 
+  geom_line(aes(x = Date, y = Temperature), colour = "grey") + 
+  geom_line(aes(x = Date, y = temp_moving_avg), colour = "red")
+```
+
+# Feast Package
+
+```{r}
+index_var(tourism)
+key_vars(tourism)
+```
+
+```{r}
+holidays <- tourism %>%
+  filter(Purpose %in% c("Holiday","Business")) %>%
+  group_by(State) %>%
+  summarise(Trips = sum(Trips))
+
+holidays
+```
+
+```{r}
+holidays %>%
+  autoplot(Trips) +
+  xlab("Year")
+```
+
+```{r}
+holidays %>%
+  filter(State %in% c("Queensland", "New South Wales", "Victoria")) %>%
+  gg_season(Trips)
+```
+
+```{r}
+holidays %>%
+  filter(State %in% c("Queensland", "New South Wales", "Victoria")) %>%
+  gg_subseries(Trips)
+```
+
+```{r}
+install.packages("sf")
+```
+
+```{r}
+library(sf)
+
+nc <- st_read(system.file("shape/nc.shp", package = "sf"))
+
+plot(nc["AREA"])
+```
+

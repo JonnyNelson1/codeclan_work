@@ -1,0 +1,57 @@
+---
+title: "Facets Practice"
+author: "Jonny Nelson"
+date: "30/11/2021"
+output: html_document
+---
+
+# facet_wrap()
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+chick_weight <- clean_names(ChickWeight)
+
+ggplot(chick_weight) + 
+  aes(x = time, y = weight, group = chick, colour = diet) +
+  geom_line() +
+  facet_wrap(~ diet, nrow = 1)
+```
+
+# Task 1 
+
+```{r}
+benefits <- read_csv("data/benefits.csv")
+```
+
+```{r}
+ggplot(benefits) + 
+geom_histogram(aes(x = age, fill = sex), col = "white") + 
+facet_wrap( ~ sex, ncol = 2)
+```
+
+```{r}
+ggplot(benefits) + 
+  geom_histogram(aes(x = age, fill = sex), col = "white") + 
+  facet_wrap(married ~ sex)
+```
+
+```{r}
+ggplot(benefits) + 
+geom_histogram(aes(x = age), col = "white")  +
+facet_grid(married ~ dkids)
+```
+
+```{r}
+ggplot(benefits) + 
+geom_histogram(aes(x = age), col = "white")  +
+facet_grid(married ~ dkids, labeller = "label_both")
+```
+
+```{r}
+ggplot(benefits) + 
+  geom_histogram(aes(x = age, fill = sex), col = "white") + 
+  facet_wrap(~ sex, ncol = 2, scales = "free_y")
+```
+

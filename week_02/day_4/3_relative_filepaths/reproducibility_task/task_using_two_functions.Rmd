@@ -1,0 +1,18 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+source("multiply_by_n.R")
+source("add_two.R")
+```
+
+```{r}
+
+multiply_by_n(2,10)
+
+add_two(2)
+
+```
+

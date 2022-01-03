@@ -1,0 +1,385 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# regex = regular expression. This allowed code to be more flexible and allows us to view patterns.
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+single_string <- "sting a"
+strings <- c("string a", "string b", "string c", "string d", "striiiiiiing e")
+```
+
+```{r}
+pattern <- "a"
+```
+
+```{r}
+single_string %>%
+  str_detect(pattern)
+```
+```{r}
+strings %>%
+  str_detect(pattern)
+```
+
+```{r}
+pattern <- "str"
+strings %>%
+  str_detect(pattern)
+
+# The pattern is "str", and then detecting across strings for this pattern
+```
+
+```{r}
+pattern <- "[abc]"
+
+# Find if there is an "a" OR a "b" OR a "c".
+
+# "[]" this is Regex.
+
+strings %>%
+  str_detect(pattern)
+```
+
+```{r}
+pattern <- "[a-z]" # look for letters between a - z
+
+strings %>%
+  str_detect(pattern)
+```
+
+# Regex is case sensitive
+
+```{r}
+pattern <- "[A-Z]" # look for letters between A - Z
+
+strings %>%
+  str_detect(pattern)
+
+# No capitals so no returns TRUE
+```
+
+```{r}
+pattern <- "[a-zA-Z]" # look for letters between a - c, A-Z
+
+strings %>%
+  str_detect(pattern)
+```
+
+```{r}
+strings
+```
+
+```{r}
+pattern <- "i{3}" # look for 3 consecutive lowercase "i's"
+
+strings %>%
+  str_detect(pattern)
+```
+
+# Task 1: 
+
+- Write and test regular expressions which will match:
+- Any string mentioning CodeClan
+- Any string containing two consecutive capital letters
+- Any string not including the word “castle” or “Castle”
+
+```{r}
+test_strings <- c(
+  "We're having great fun learning about data analysis at CodeClan!",
+  "CodeClan is at 37 Castle Terrace in Edinburgh, ClockWise in Glasgow, and Wasps Academy in Inverness",
+  "Our cohort code starts with DE, DG or D",
+  "You get a great view of the castle or the national conservatoire from just outside CodeClan's door"
+)
+```
+
+```{r}
+pattern <- "CodeClan"
+
+test_strings %>%
+  str_detect(pattern)
+
+# "[Cc]ode[Cclan]" if you wanted either title or lowercase
+```
+
+```{r}
+pattern <- "[A-Z]{2}"
+
+test_strings %>%
+  str_detect(pattern)
+```
+
+```{r}
+pattern <- "[Cc]astle"
+
+test_strings %>%
+  str_detect(pattern, negate = TRUE)
+
+# OR
+
+pattern <- "Castle|castle"
+
+test_strings %>%
+  str_detect(pattern, negate = TRUE)
+
+"
+```
+
+# Extracting matching substrings
+
+[] - or operation
+{1} - number of occurrences
+(?i) - lets ignore capitalization
+* - zero or more occurrence
++ - one or more occurrence
+
+```{r}
+strings <- c(
+  "This string has an_address@email.com in it", 
+  "This one has user.name@company.co.uk", 
+  "Now we've got other_person_123@server.net and my.name@runningoutofideas.com"
+)
+```
+
+```{r}
+test_string <- "THIS is a string"
+
+pattern <- "[(?i)a-z]"
+
+test_string %>%
+  str_extract(pattern)
+```
+
+```{r}
+pattern <- "[a-z]"
+strings %>%
+  str_extract(pattern)
+
+# ignored the capital letters at the start of the string
+```
+
+```{r}
+pattern <- "[a-z]@"
+strings %>%
+  str_extract(pattern)
+
+# extracts 
+```
+
+```{r}
+invalid_email <- "gs@emailprovider.com"
+
+pattern <- "[a-z]*@emailprovider.com"
+
+invalid_email %>%
+  str_extract(pattern)
+```
+
+```{r}
+invalid_email <- "@emailprovider.com"
+pattern <- "[a-z]+@emailprovider.com"
+
+invalid_email %>%
+  str_extract(pattern)
+
+# Nothing infront of the @. Therefore nothing is returned 
+```
+
+```{r}
+strings
+```
+
+```{r}
+pattern <- "[a-z]+@"
+
+strings %>%
+  str_extract(pattern)
+```
+
+```{r}
+pattern <- "[a-z0-9]+@[a-z]+"
+
+strings %>%
+  str_extract(pattern)
+```
+
+```{r}
+pattern <- "[a-z0-9_\\.]+@[a-z\\.]+"
+
+strings %>%
+  str_extract(pattern)
+```
+
+```{r}
+strings
+```
+```{r}
+pattern <- "[a-z0-9_\\.]+@[a-z\\.]+"
+
+extracted <- strings %>%
+  str_extract_all(pattern)
+
+extracted
+```
+
+```{r}
+strings
+```
+
+```{r}
+pattern <- "[a-z0-9_\\.]+@[a-z\\.]+"
+
+strings %>%
+  str_replace(pattern, "REDACTED")
+```
+
+```{r}
+pattern <- "[a-z0-9_\\.]+@[a-z\\.]+"
+
+strings %>%
+  str_replace_all(pattern, "ooooweee")
+```
+
+# Task 1: 
+Make a vector containing the strings:
+“Colin’s mobile number definitely isn’t 07777777777.”
+“A landline might be 01010 123456.”
+“Mhairi, Del, Aileen and Steph have been some of your instructors so far.”
+“I’m called your_name_here and I live in your_town_here.”
+Use regular expressions to:
+Extract all the names
+Extract the landline number
+Insert your name and where you live into the fourth string
+
+```{r}
+vector_strings <- c("Colin’s mobile number definitely isn’t 07777777777.", "A landline might be 01010 123456.", "Mhairi, Del, Aileen and Steph have been some of your instructors so far.", "I’m called your_name_here and I live in your_town_here.")
+
+vector_strings
+```
+
+```{r}
+pattern <- "[A-Z][a-z]+"
+
+extracted <- vector_strings %>%
+  str_extract_all(pattern)
+
+extracted %>% flatten_chr()
+
+# compresses the matrix, and gives us a list
+```
+
+```{r}
+pattern <- "[0-9]{5} [0-9]{6}|[0-9]{11}"
+
+vector_strings %>%
+  str_extract_all(pattern) %>%
+  flatten_chr()
+
+# that extracts all the numbers there. Landline or Mobile
+```
+
+```{r}
+my_name <- "Jonny"
+my_address <- "Edinbro"
+
+vector_strings %>%
+  str_replace("your_name_here", my_name) %>%
+  str_replace("your_town_here", my_address)
+```
+
+# Handy Regex Notations
+
+# Standard Punctuation: ?!':;,
+
+```{r}
+punct_strings <- c(
+  "Why is this a question?", 
+  "I am a sentence with no punctation",
+  "I am a well punctuated sentence.", 
+  "WOW!"
+)
+punct_strings
+```
+
+```{r}
+punct_strings %>%
+  str_extract_all("[:punct:]")
+
+# Gone into each vector and extracted the punctuation.
+```
+
+```{r}
+punct_strings %>%
+  str_extract_all("[A-Z]{3}[:punct:]") %>%
+  flatten_chr()
+```
+#  Start of end of the string
+
+^ - start of a string
+$ - end of the string
+
+```{r}
+test_strings <- c(
+  "abc", 
+  "Abc",
+  "abC",
+  "s"
+)
+
+test_strings
+```
+
+```{r}
+test_strings %>%
+  str_extract_all("^[a-z]$") 
+
+# Starts and ends with exactly one character of the e
+```
+
+```{r}
+test_strings %>%
+  str_extract_all("^[a-z]")
+
+# First occurrence where is starts with a lowercase alphabet
+```
+
+```{r}
+test_strings %>%
+  str_extract_all("[a-z]$")
+
+# First occurrence where is ends with a lowercase alphabet
+```
+
+```{r}
+test_strings %>%
+  str_extract_all("^[a-z]$")
+
+# Only takes the observation that starts and ends with a letter of one character
+```
+
+```{r}
+student <- c("Abigail", "Bjorn", "Caitlin")
+age <- c(25, 56, 40)
+emails <- c("abigal12@company.co.uk", "bsmith@gmail.co.uk", "caitlin_1980")
+
+student_info <- tibble(student, age, emails)
+
+student_info 
+
+```
+
+```{r}
+student_info %>%
+  mutate(email_detect = str_detect(emails, "[a-z0-9]+@"))
+```
+
+```{r}
+student_info %>%
+  mutate(email_new = str_extract(emails, "[a-z0-9_\\.]+@[a-z\\.]+"))
+```
+

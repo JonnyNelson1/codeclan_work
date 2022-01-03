@@ -1,0 +1,226 @@
+---
+title: "Facets"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+    pdf_document: default
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.align = 'center', message = FALSE, warning = FALSE)
+```
+
+# Learning Objectives<br>
+
+* Know what facets are and when to use them.
+* Be able to create ggplot2 plots with facets.
+
+**Duration - 30 minutes**<br>
+
+# Facetting
+<br>
+
+Faceting is converting one plot into multiple related plots. This helps ease clarity of data, and provides a convenient and quick way to group data into related categories. *If you ask R programmers why they like `ggplot2`, they tend to mention ease of facetting.*  
+
+This is easiest to explain how facetting works is with an example. 
+
+<br> 
+
+## Using `facet_wrap()`
+
+Let's look at the `ChickWeight` dataset from this morning which has information on the weights of chickens given different foods (remembering this is an inbuilt dataset available in Base R). 
+
+The basic line plot we made in the first lesson is a bit hard to follow, because there are too many lines, so it's hard for us to compare different diets. 
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+chick_weight <- clean_names(ChickWeight)
+
+ggplot(chick_weight) + 
+  aes(x = time, y = weight, group = chick, colour = diet) +
+  geom_line()
+```
+<br> 
+
+Rather than just relying on colours, let's break it down into multiple graphs using facets. We will do this with the function `facet_wrap()`.
+
+```{r}
+ggplot(chick_weight) + 
+  aes(x = time, y = weight, group = chick, colour = diet) +
+  geom_line() +
+  facet_wrap(~ diet)
+```
+<br> 
+
+In the example above we tell `ggplot2` to facet by `diet`. It determines the number of levels of `diet` (which in this case is 4) and produces this many subplots. Each subplot is assigned a level, and only observations with that level of `diet` are included in that subplot. 
+
+Note that the common scale makes comparison between the graphs easier. We don't even need the colours any more, as the titles at the top of the plots show which diet the plot is referring to, but some people find the colour helpful so you may wish to keep them.
+<br>
+
+The basic `facet_wrap` function has the following structured syntax:
+
+<div class='emphasis'>
+
+```
+facet_wrap(
+   facets,        #   specify the variables to facet with respect to
+   nrow = NULL,   #   number of rows in facet grid
+   ncol = NULL,   #   number of columns in facet grid
+   ...
+)
+```
+
+</div>
+<br>
+
+You will see there are 2 other augments `nrow` and `ncol` - these let us determine how the facet plots will be laid out and deciding this layout you want to think about how people will be comparing each plot. In our plot above it's easy to compare diets 1 and 2 to each other and 3 and 4 with each other. But it's a little harder to compare say diet 1 and 4 because they don't sit on the same row. We can use the `nrow` or `ncol` arguments to specify this. 
+
+```{r}
+ggplot(chick_weight) + 
+  aes(x = time, y = weight, group = chick, colour = diet) +
+  geom_line() +
+  facet_wrap(~ diet, ncol = 4)
+```
+We could have also set `nrow = 1` and it would have produced the same output. 
+
+
+
+<blockquote class='task'>
+**Task - 5 mins** 
+  
+Let's load in the `benefits` dataset, which has data on unemployed blue collar workers in America. 
+
+```{r}
+benefits <- read_csv("data/benefits.csv")
+```
+
+Use `geom_histogram` to create a histogram showing the number of unemployed by age. Then facet the graph based on biological `sex`.   
+*Hint: `geom_histogram` is almost the same as `geom_bar`, but is better suited to plotting continuous data because of the binning.*
+  
+<details>
+<summary>**Answer**</summary>
+
+```{r}
+ggplot(benefits) + 
+geom_histogram(aes(x = age, fill = sex), col = "white") + 
+facet_wrap( ~ sex, ncol = 2)
+```
+
+</details>
+</blockquote>
+
+So we can condition on a single variable easily using `facet_wrap()`. But we can also condition on two variables. For this, we use `facet_grid()`.  
+<br>
+
+## `facet_grid()`
+<br>
+
+Another option you have for faceting is to use the `facet_grid()` function. This is pretty similar to `facet_wrap()`, but it gives you more control when plotting two (or more) variables if you use `facet_grid()`. In fact, `facet_grid(x, y)` will display x*y plots even if some plots are empty. So it can be useful when you have some comparisons that may contain no data, but you still want to show them. 
+
+Let's look at this by splitting our data out by biological `sex` **and** marital status (`married`).  
+
+Let's first do a `facet_wrap()`. 
+
+
+```{r}
+ggplot(benefits) + 
+  geom_histogram(aes(x = age, fill = sex), col = "white") + 
+  facet_wrap(married ~ sex)
+```
+
+```{r}
+ggplot(benefits) + 
+  geom_histogram(aes(x = age, fill = sex), col = "white") + 
+  facet_grid(married ~ sex)
+```
+
+The grid layout is neater and easier to absorb than the interactions. It also gives more space to the geoms and less to padding and labels.
+
+Note the layout means we can compare y-values more easily between columns, and x-values more easily between rows. Whether than's an advantage will obviously depend on the problem. Bear it in mind though.
+
+<blockquote class='task'>
+**Task - 5 mins** 
+
+1.
+Use the same dataset, but base the `facet_grid()` on marital status (married) and if the individual has children (`dkids`). 
+
+2. 
+Extension: can you improve the way that the facets are labled.
+
+<details>
+<summary>**Hint**</summary>
+
+Have a look at the argument `labeller` in `facet_grid()`.
+
+</details>
+
+<details>
+<summary>**Answer**</summary>
+1.
+```{r}
+ggplot(benefits) + 
+geom_histogram(aes(x = age), col = "white")  +
+facet_grid(married ~ dkids)
+```
+
+2. 
+```{r}
+ggplot(benefits) + 
+geom_histogram(aes(x = age), col = "white")  +
+facet_grid(married ~ dkids, labeller = "label_both")
+```
+
+</details>
+</blockquote>
+
+
+## Additional facetting options - scales and space
+
+By default facets are plotted on the same scale and are allocated the same area. This isn't always the desired outcome. 
+
+For `facet_wrap()` we can set the argument `"scales"` to `"free_x"`, `"free_y"` or `"free"` to permit the facetter to vary the x-scale, y-scale, or both, between facets. 
+
+(This argument is set to `"fixed"` by default.)
+
+Let's look at an example:
+
+```{r}
+ggplot(benefits) + 
+  geom_histogram(aes(x = age, fill = sex), col = "white") + 
+  facet_wrap(~ sex, ncol = 2, scales = "free_y")
+```
+
+<br>
+<blockquote class='task'>
+**Task - 2 mins** 
+
+Why might this not be a good idea?
+
+<details>
+<summary>**Answers**</summary>
+
+It's more difficult to compare facets now! If someone didn't look at the axis ranges they may assume they are the same and interpret the data incorrectly. You need to be VERY careful with this technique, it is not advisable in most cases (unless you make it very clear to readers). 
+
+</details>
+</blockquote>
+<br> 
+
+
+
+## Continuous Variables
+
+Up until now, we've used the facet functions to split the plots out by discrete variables: that is, variables that take on discrete values, or that are categories. But suppose we want to facet with respect to a continuous variable (one that can take on any value). Basically, you can't as you'd end up with too many plots with (probably) only a single point on them.  But you can discretise the variable. `ggplot2` includes 3 helper functions for doing this:
+
+```cut_interval(x,n)```  :  divides the data into ```n``` bins, each of the same width  
+```cut_width(x,width)``` :  divides the data into bins of width ```width```  
+```cut_number(x,n=10)``` :  divides the data into ```n``` bins each containing roughly the same number of points  
+
+We won't be covering examples of use of these today but it's useful to have awareness of these functions for future use. You can find out more about them in their help files. 
+
+

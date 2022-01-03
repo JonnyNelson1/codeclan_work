@@ -1,0 +1,36 @@
+---
+title: "`ggplot2` Practice Questions"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+
+We're going to use data on loans provided by LendingClub to practice `ggplot2`. This dataset contains information about real loans provided through an online lending platform.
+
+First, read the dataset `loans.csv` in.
+
+#
+
+For each of the questions below, create the plot using ggplot and write a sentence about what the plot shows.
+
+1.	Make a scatterplot with loan amount on the x-axis and interest rate, on the y-axis again.
+2.	Add transparency of points to the plot you just created.
+3.	Edit the plot you created to colour the points by the grade of the loan.
+4.	Editing the current plot, use faceting to make a separate plot for each grade.
+
+#
+
+Make a barplot where the height of the bars show the mean loan amount for each grade. Colour the bars by the mean interest rate in each grade.
+
+
+#
+
+Explore the data. Try to create one polished graph that summarises how purpose, loan about, interest rate and grade are related. Is there one purpose that is significantly different from the others? How can you show this in your graph?
+
+

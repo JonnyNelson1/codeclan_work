@@ -1,0 +1,296 @@
+---
+title: "Lists and Matrices"
+output: html_notebook
+---
+
+```{r}
+
+numbers <- 1:5
+
+strings <- c("I", "am", "he")
+
+booleans <- c(TRUE, FALSE)
+
+class(numbers)
+
+# These are all atomic vectors. vectors with the same type of value within
+
+```
+# Create them with `list()`
+
+# back-ticks above render as a code format when knitted
+
+```{r}
+
+list("True", TRUE, 12, c(1,2,3), list("david", 2))
+
+```
+
+`as.list()`
+
+```{r}
+# Not in the tidyverse anymore! as denoted by the dot
+
+as.list(numbers)
+```
+
+```{r}
+x <- list(1, "a", TRUE, c(1,2,3))
+
+class(x[[2]]) # Character
+
+class(x[2]) # List
+
+# Feeds back the position 2. 
+```
+
+`[]` will always return the same data structure
+
+## Naming Lists
+
+```{r}
+named_list <- list(a = "I love RStudio", b = 1:10)
+
+named_list
+```
+
+```{r}
+named_list$b
+```
+
+```{r}
+
+named_list[["a"]]
+
+```
+
+```{r}
+returned_value <- "a"
+
+named_list[[returned_value]]
+```
+
+```{r}
+
+named_list[[2]]
+
+```
+
+## Nested Lists
+
+You can put a list inside another list(inside another list!)
+
+```{r}
+
+student_info <- list(
+                "Agnes" = list(height = 1.8, shoe_size = 8L),
+                "Bobby" = list(height = 2.1, gender = "Male"),
+                "Charlie" = list(gender = "Female", likes_beets = TRUE)
+)
+
+student_info
+
+student_info$Bobby$height
+```
+
+```{r}
+
+student_info$Agnes$shoe_size
+
+# Here we are accessing items within lists within lists
+
+```
+
+```{r}
+
+student_info[["Agnes"]][["shoe_size"]]
+
+```
+
+```{r}
+
+student_info[[1]][[2]]
+
+```
+
+Task - 5 minutes
+
+Make a named list that contains a numeric vector and a character vector.
+
+Access the second element of your list using double square brackets [[]]. What is it's class?
+
+Access the second element of your list using single square brackets []. What is it's class?
+
+Access the second element of your list by name. What is it's class?
+
+```{r}
+
+# Question 1
+
+example_list <- list(a = c(1,4,7,9,11), b =  c("J","M","L","R","P"))
+
+example_list
+
+# Question 2
+
+example_list[[2]]
+
+class(example_list[[2]])
+
+# Question 3
+
+example_list[2]
+
+class(example_list[2])
+
+# Question 4
+
+example_list[["b"]]
+
+class(example_list[["b"]])
+
+# Additonal Q
+
+class(example_list$b)
+
+```
+
+# Matrices
+
+# A data structure that holds rectangular data
+
+```{r}
+matrix(1:6, nrow = 2, ncol = 3)
+```
+
+```{r}
+matrix(1:6, nrow = 2, ncol = 3, byrow = TRUE)
+
+# the "byrow = TRUE" argument fills by row first
+```
+
+```{r}
+m <- matrix(1:6, nrow = 2, ncol = 3)
+```
+
+```{r}
+class(m)
+```
+
+# Matrices have to hold all values of the same type. 
+
+```{r}
+as.data.frame(m)
+```
+# Selecting element in a matrix
+
+```{r}
+m[1,3]
+
+# Select value in the 1st row and 3rd column
+```
+
+```{r}
+m[1,]
+
+# Select the first row
+
+m[,3]
+
+# Select the third column
+```
+
+# You can select multiple rows or columns by passing a vector
+
+```{r}
+
+m[, c(1,3)]
+
+# Returns everything from the first and third column
+
+```
+
+# Perform calculations on the entire matrix
+
+```{r}
+m * 5
+```
+
+```{r}
+new_matrix <- matrix(c(1,2,5,745,45,5634), nrow=2, ncol=3)
+
+new_matrix
+```
+
+```{r}
+library(dplyr)
+library(magrittr)
+
+numers <- iris %>% select(-Species)
+
+# if it's all the same data type
+
+numers * 3
+
+# access the first row of a df
+
+numers[1, ]
+```
+
+## Working with rows and columns
+
+- want to get the mean average of a column of a matrix
+
+`colMeans()`
+
+# NB: As there are no unscores in snakecase, we are not in the tidyverse
+
+```{r}
+colMeans(m)
+```
+# Other convenience functions:
+
+`rowSums`
+`colSums`
+`rowMeans`
+`colMeans`
+
+```{r}
+
+rowSums(m)
+
+colSums(m)
+
+rowMeans(m)
+
+colMeans(m)
+
+```
+
+# These functions also work on data frames as long at the columns are all the same type.
+
+```{r}
+colMeans(numers)
+
+# Spits a vector 
+```
+
+```{r}
+
+```
+
+##Task - 5 minutes
+#Make a matrix with 3 rows and 4 columns. Each column should contain the numbers 1 to 3.
+#Find the element in the 2nd row, 3rd column.
+#Check that all the columns are identical by checking that their sums are the same.
+
+```{r}
+the_matrix <- matrix(1:3, ncol = 4, nrow = 3)
+
+the_matrix
+
+the_matrix[2,3]
+
+colSums(the_matrix)
+```
+

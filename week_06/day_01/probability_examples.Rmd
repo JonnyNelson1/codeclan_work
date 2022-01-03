@@ -1,0 +1,43 @@
+---
+title: "Probability"
+author: "Jonny Nelson"
+date: "06/12/2021"
+output: html_document
+---
+
+```{r}
+library(prob)
+library(tidyverse)
+```
+
+```{r}
+dice_rowl <- matrix(1:6, nrow = 6, ncol = 6)
+```
+
+# Probability that dice roll = 7
+
+```{r}
+s_two_dice <- rolldie(times = 2, nsides = 6) 
+
+sum_equals_7 <- s_two_dice %>%
+  filter(X1 + X2 == 7)
+
+sum_equals_7 %>%
+  summarise(sum_equals_7 = n())
+```
+
+```{r}
+s_two_die <- s_two_dice %>%
+  mutate(total = X1 + X2) 
+
+s_two_die
+```
+
+# Task 1
+
+```{r}
+first_roll_odd <- s_two_dice %>%
+  mutate(first_roll_odd = (X1 + X2) %% 2 == 1) %>%
+  filter(first_roll_odd == TRUE)
+```
+

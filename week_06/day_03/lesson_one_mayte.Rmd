@@ -1,0 +1,203 @@
+---
+title: "first_lesson"
+author: "Jonny Nelson"
+date: "08/12/2021"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(e1071)
+library(prob)
+```
+
+```{r}
+telecom_data <- read_csv("1_sampling_distributions_standard_errors/data/telecomms_churn.csv") %>%
+  clean_names(
+    
+  )
+```
+
+```{r}
+# Exploration of the data
+
+glimpse(telecom_data)
+```
+
+```{r}
+# Summary table
+
+summary_population <- telecom_data %>%
+  summarise(
+    mean_monthly_charges = mean(monthly_charges),
+    mean_tenure = mean(tenure),
+    prop_churn = sum(churn == "Yes") / n()
+  )
+```
+
+```{r}
+# Look at monthly charges
+
+telecom_data %>%
+  ggplot() +
+  aes(x = monthly_charges) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)
+```
+```{r}
+# Look at tenure
+
+telecom_data %>%
+  ggplot() +
+  aes(x = tenure) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)
+```
+
+
+```{r}
+# Look at churn
+
+telecom_data %>%
+  ggplot() +
+  aes(x = churn) +
+  geom_bar(col = "white", fill = "steel blue")
+```
+
+```{r}
+# Sampling in a data set
+
+library(infer)
+
+sample_200 <- telecom_data %>%
+  rep_sample_n(
+    size = 200,
+    reps = 1
+  )
+
+sample_200
+```
+
+```{r}
+groups(sample_200)
+```
+```{r}
+summary_sample <- sample_200 %>%
+  ungroup() %>%
+  summarise(
+    mean_monthly_charges = mean(monthly_charges),
+    mean_tenure = mean(tenure),
+    prop_churn = sum(churn == "Yes") / n(),
+    sd_monthly_charges = sd(monthly_charges)
+  )
+
+bind_rows(summary_sample, summary_population) %>%
+  mutate(row.names(c(summary_sample, summary_population)))
+```
+
+```{r}
+summary_sample - summary_population
+```
+
+```{r}
+rep_sample_200 <- telecom_data %>%
+  rep_sample_n(
+    size = 200,
+    reps = 5000,
+  ) %>%
+  summarise(
+    mean_monthly_charges = mean(monthly_charges),
+    mean_tenure = mean(tenure),
+    prop_churn = sum(churn == "Yes") / n()
+  )
+
+rep_sample_200
+```
+
+```{r}
+rep_sample_200 %>%
+  ggplot() +
+  aes(x = mean_monthly_charges) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7) +
+  stat_function(
+    fun = dnorm,
+    args = list(
+      mean = summary_sample$mean_monthly_charges,
+      sd = summary_sample$sd_monthly_charges
+    ),
+    col = "blue"
+  )
+
+# Stat  function doesn't work as y = count, whereas sample_summary is using the actual mean and sd.
+
+
+```
+
+```{r}
+# tenure
+
+rep_sample_200 %>%
+  ggplot() +
+  aes(x = mean_tenure) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7) 
+```
+
+```{r}
+#Churn
+
+rep_sample_200 %>%
+  ggplot() +
+  aes(x = prop_churn) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7) 
+```
+
+```{r}
+# Standard Error
+
+library(fastGraph)
+
+# Calculating the standard error
+
+standard_error <- rep_sample_200 %>%
+  summarise(se_mean_monthly_charges = sd(mean_monthly_charges),
+            se_mean_tenure = sd(mean_tenure),
+            se_mean_churn = sd(prop_churn),
+            )
+
+
+shadeDist(
+   xshade = c(60,70),
+   ddist = "dnorm",
+   lower.tail = FALSE,
+   parm1 = mean(rep_sample_200$mean_monthly_charges),
+   parm2 = standard_error$se_mean_monthly_charges,
+   xlab = "mean monthly chagres"
+   
+) 
+
+```
+
+```{r}
+rep_sample_200 %>%
+  dplyr::filter(mean_monthly_charges >= 60,
+                mean_monthly_charges <= 70) %>%
+  summarise(
+    prop = n() / nrow(rep_sample_200)
+  )
+
+# be careful when loading in the packages 
+```
+
+```{r}
+# tenure
+
+shadeDist(
+   xshade = c(30,35),
+   ddist = "dnorm",
+   lower.tail = FALSE,
+   parm1 = mean(rep_sample_200$mean_tenure),
+   parm2 = standard_error$se_mean_tenure,
+   xlab = "mean tenure"
+   
+) 
+```
+

@@ -1,0 +1,171 @@
+---
+title: "Lab"
+author: "Jonny Nelson"
+date: "08/12/2021"
+output: html_document
+---
+
+# Question 1
+
+```{r}
+library(janitor)
+library(tidyverse)
+library(prob)
+library(infer)
+
+house_sales <- read_csv("data/ames.csv") %>%
+  clean_names()
+
+glimpse(house_sales)
+```
+
+# Question 2
+
+```{r}
+house_sales %>%
+  ggplot() +
+  aes(x = sale_price) +
+  geom_histogram(col = "white", fill = "steel blue") +
+  labs(x = "Sale Price") +
+  stat_function(
+    fun = dnorm,
+    args = list(
+      mean = summary_stats$mean,
+      sd = summary_stats$sd
+    ),
+    col = "blue"
+  )
+
+# Normally distributed but with a left-skew
+```
+
+# Quesiton 3
+
+```{r}
+summary_population_stats <- house_sales %>%
+  summarise(
+    mean_sale_price = mean(sale_price),
+    sd_sale_price = sd(sale_price)
+  )
+
+summary_population_stats
+```
+
+# Question 4
+
+```{r}
+# Create the bootstrap sample data 
+
+bootstrap_resample_100 <- house_sales %>%
+  rep_sample_n(size = 100, replace = TRUE, reps = 1000) %>%
+  summarise(
+    mean_sale_price = mean(sale_price)
+  )
+
+bootstrap_resample_100
+```
+
+```{r}
+bootstrap_resample_100 %>%
+  ggplot(aes(x = mean_sale_price)) +
+  geom_histogram(col = "white", fill = "steel blue", alpha = 0.7)
+```
+
+```{r}
+ci_95 <- bootstrap_resample_100 %>%
+  summarise(
+    mean = mean(mean_sale_price),
+    lower_bound = quantile(mean_sale_price, probs = 0.025),
+    upper_bound = quantile(mean_sale_price, probs = 0.975)
+  )
+
+ci_95
+```
+
+```{r}
+# Bootstrap sample 100
+
+infer_resample_100 <- house_sales %>%
+  specify(response = sale_price) %>%
+  generate(reps = 1000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+infer_resample_100
+```
+
+```{r}
+# Calculate the confidence interval
+
+infer_ci_95 <- infer_resample_100 %>%
+  get_confidence_interval(level = 0.95, type = "percentile")
+
+
+
+infer_ci_95
+```
+
+```{r}
+# Visualise the data 
+
+infer_resample_100 %>%
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = infer_ci_95) +
+  labs(x = "House Price")
+```
+
+```{r}
+# Calculate the point estimate
+
+mean_infer <- infer_resample_100 %>%
+  summarise(mean = mean(stat))
+
+mean_infer
+
+house_sales %>%
+  summarise(mean(sale_price))
+```
+
+```{r}
+results <- tibble()
+for (sample_num in 1:1000){
+
+  # get a new 100-observation random sample from ames
+  this_sample <- house_sales %>%
+    rep_sample_n(size = 100, reps = 1) %>%
+    ungroup() %>%
+    select(sale_price)
+  
+  # create a bootstrap distribution of mean(sale_price)
+  # use 1000 reps
+  this_bootstrap <- this_sample %>%
+    specify(response = sale_price) %>%
+    generate(reps = 1000, type = "bootstrap") %>%
+    calculate(stat = "mean")
+
+  # get 95% CI for this bootstrap distribution
+  this_ci <- this_bootstrap %>%
+    get_ci(level = 0.95, type = "percentile")
+  
+  # prepare new row for results, storing CI bounds
+  this_result <- c(
+    sample_num = sample_num, 
+    lower = this_ci %>% 
+      pull(lower_ci), 
+    upper = this_ci %>%
+      pull(upper_ci)
+  )
+  
+  # add this_result to growing tibble of results
+  results <- results %>%
+    bind_rows(this_result)
+}
+```
+
+```{r}
+results %>%
+  mutate(popn_param_in_ci =
+           (summary_population_stats$mean_sale_price < upper) &
+           (summary_population_stats$mean_sale_price > lower)) %>%
+  summarise(sum(popn_param_in_ci))
+```
+

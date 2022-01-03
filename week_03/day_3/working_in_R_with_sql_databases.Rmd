@@ -1,0 +1,114 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+
+source("C:/omni_credentials.R")
+
+```
+
+# Connnecting R to a database
+
+```{r}
+library(RPostgres)
+
+source("C:/omni_credentials.R")
+
+# Source the credentials file. This makes the variables omni_username and omni_password avaliabe to use.
+
+# create connection object using omni_username and omni_password
+db_connection <- dbConnect(
+  drv = Postgres(), 
+  user = omni_username,
+  password = omni_password,
+  dbname = "omni_pool",
+  host = "db-postgresql-lon1-20135-do-user-7581050-0.b.db.ondigitalocean.com",
+  port = 25061,
+  bigint = "numeric"
+)
+
+# Now we have used our credentials, can now remove from the environment.
+
+rm(omni_password, omni_username)
+```
+
+```{r}
+# list the tables, passing in the connection object
+
+dbListTables(conn = db_connection)
+```
+
+```{r}
+# we can also see the fields in a table
+
+dbListFields(conn = db_connection, 
+             name = "employees")
+```
+
+```{r}
+# let's get the records!
+
+data <- dbGetQuery(conn = db_connection,
+                   statement = "SELECT * FROM employees")
+```
+
+```{r}
+class(data)
+```
+
+# Fetching record in 'chunks' - useful for big data
+
+```{r}
+results_set <- dbSendQuery(conn = db_connection,
+                           statement = "SELECT * FROM employees")
+
+class(results_set)
+```
+
+```{r}
+first_10 <- dbFetch(res = results_set,
+                    n = 10)
+```
+
+```{r}
+next_10 <- dbFetch(res = results_set,
+                    n = 10)
+```
+
+```{r}
+all_remaining <- dbFetch(res = results_set,
+                         n = -1)
+```
+
+```{r}
+dbClearResult(res = results_set)
+```
+```{sql, connection = db_connection}
+SELECT *
+FROM employees
+LIMIT 10
+```
+
+```{sql, connection = db_connection, output.var = "out"}
+SELECT *
+FROM employees
+LIMIT 10;
+```
+
+
+```{r}
+library(tidyverse)
+
+out %>% summarise(average_salary = mean(salary))
+```
+
+# Disconnecting 
+
+```{r}
+dbDisconnect(conn = db_connection)
+```
+
+
+

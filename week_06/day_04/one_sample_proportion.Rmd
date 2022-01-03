@@ -1,0 +1,160 @@
+---
+title: "one_sample_proportion"
+author: "Jonny Nelson"
+date: "09/12/2021"
+output: html_document
+---
+
+```{r}
+# Be wary of loading janitor after tidyverse
+
+library(infer)
+library(tidyverse)
+library(janitor)
+library(prob)
+```
+
+```{r}
+books_data <- read_csv("2_one_sample_tests_proportions/data/books.csv") %>%
+  clean_names()
+```
+
+# Null Hypothesis
+
+Null Hypothesis: proportion of books without text reviews = 7%
+
+Alternative Hypothesis: proportion of books without text review != 7%
+
+```{r}
+clean_books <- books_data %>%
+  dplyr::filter(!is.na(average_rating)) %>%
+  rename(num_pages = number_num_pages) %>%
+  glimpse()
+```
+
+# Observed Stat in the sample
+
+```{r}
+observed_stat <- clean_books %>%
+  group_by(text_reviews_count) %>%
+  summarise(prop = n() / nrow(clean_books)) %>%
+  dplyr::filter(text_reviews_count == 0) %>%
+  pull()
+
+# OR
+
+clean_books %>%
+  dplyr::filter(text_reviews_count > 0) %>%
+  summarise(prop_zero = 1- (n() / nrow(clean_books)))
+```
+# Mutate a new column to say if there were text reviews
+
+```{r}
+books_tidy_prop <- clean_books %>%
+  mutate(text_reviews_flag = if_else(
+      text_reviews_count > 0,
+      "text_review",
+      "no_text_review"
+  )) 
+
+books_tidy_prop
+
+```
+
+# Null Distribution
+
+```{r}
+null_distribution <- books_tidy_prop %>%
+  specify(response = text_reviews_flag,
+          success = "no_text_review",) %>%
+  hypothesise(null = "point", p = 0.07) %>%
+  generate(reps = 5000, type = "simulate") %>%
+  calculate(stat = "prop")
+
+head(null_distribution)
+```
+```{r}
+null_distribution %>%
+  visualise(bins = 30)
+```
+
+
+```{r}
+observed_stat <- books_tidy_prop %>%
+  specify(response = text_reviews_flag,
+          success = "no_text_review") %>%
+  calculate(stat = "prop")
+
+observed_stat
+```
+
+```{r}
+null_distribution %>%
+  visualise(bins = 30) +
+  shade_pvalue(obs_stat = observed_stat,
+               direction = "both")
+```
+
+```{r}
+p_value <- null_distribution %>%
+  get_pvalue(obs_stat = observed_stat,
+             direction = "both")
+
+p_value
+```
+
+# Taskles
+
+# Observed Stat 
+
+```{r}
+observed_statistic <- clean_books %>%
+  group_by(language_code) %>%
+  dplyr::filter(language_code == "fre") %>%
+  summarise(prop = n() / nrow(clean_books)) %>%
+  pull()
+```
+
+# Mutate a new column to say if the book is in French
+
+```{r}
+books_tidy_prop <- clean_books %>%
+  select(book_id, language_code) %>%
+  mutate(language_french = if_else(
+      language_code == "fre",
+                       "french",
+                       "not_french")
+  ) 
+
+books_tidy_prop
+
+```
+# Null Distribution
+
+```{r}
+null_distribution <- books_tidy_prop %>%
+  specify(response = language_french,
+          success = "french",) %>%
+  hypothesise(null = "point", p = 0.015) %>%
+  generate(reps = 5000, type = "simulate") %>%
+  calculate(stat = "prop")
+
+head(null_distribution)
+```
+# Visualise Distribution
+
+```{r}
+null_distribution %>%
+  visualise(bins = 30) +
+    shade_p_value(obs_stat = observed_statistic,
+                  direction = "left")
+```
+
+```{r}
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = observed_statistic,
+             direction = "left")
+
+p_value
+```
+

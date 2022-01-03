@@ -1,0 +1,281 @@
+---
+title: "Scales and Coordinates"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+    pdf_document: default
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.align = "center")
+```
+
+# Learning Objectives<br>
+
+* Be able to customise the axis labels 
+* Be able to limit the plotted axes
+* Be able to transform the scale of an axis 
+* Be able to flip a plot
+
+
+**Duration - 45 minutes**<br>
+
+In this lesson we're going to look at scales and coordinates. You will learn how to make cosmetic adjustments to the axes on your plots, how to alter the scale used, how to zoom in on your plot, and how to switch the coordinate system used. 
+
+
+# Scales
+
+Scales give the details of the mapping from the data to the aesthetic qualities.The ggplot2 package is extremely good at selecting sensible default values for your scales. In most cases, you don’t have to do much to customize your scales. However, ggplot2 has a wide range of functions and settings to give you fine-grained control over your scale behaviour and appearance.
+
+
+# Labels 
+
+## Breaks
+
+So let's look plot of our pets data we saw in lesson 1. 
+
+```{r}
+library(tidyverse)
+
+pets <- read_csv("data/pets.csv")
+
+ggplot(pets) +
+  aes(age, weight, colour = sex) +
+  geom_point()
+```
+
+Now, the x-axis shows tick marks and labels every 2.5 years - it's an odd choice for age. Let's switch these to be every year. For this, we can use the function `scale_x_continuous()` function. With this function, you can include `breaks` to tell `ggplot()` how frequently you want to show a tick value on the axis.   
+
+```{r}
+ggplot(pets) +
+  aes(age, weight, colour = sex) +
+  geom_point() +
+  scale_x_continuous(breaks = 1:13) # adjust breaks here
+```  
+<br> 
+
+This looks a bit clearer. 
+
+The equivalent function for the y-axis is `scale_y_continuous()`. We can change our y-axis scale:
+
+```{r}
+ggplot(pets) +
+  aes(age, weight, colour = sex) +
+  geom_point() +
+  scale_x_continuous(breaks = 1:13) + 
+  scale_y_continuous(breaks = c(5, 7, 9, 11))
+```  
+
+# Scale limits
+
+Suppose, we only want to look at animals of a set age range. This is a straightforward addition to the arguments of the scale function using the `limits()` function. Here, we take animals that are within the range 1-8.  
+
+```{r}
+ggplot(pets) +
+  aes(age, weight, colour = sex) +
+  geom_point() +
+  scale_x_continuous(
+    breaks = 1:13,
+    limits = c(1, 8)
+    )
+```
+
+*Side: You can use `NA` for the lower (or upper) limit if you don't want to apply a lower (or upper) limit.*  
+
+
+<blockquote class='task'>
+**Task - 2 mins** 
+Eliminate the animals who weigh more than 8kg from the plot.
+
+<details>
+<summary>**Answer**</summary>
+
+```{r}
+ggplot(pets) +
+  aes(age, weight, colour = sex) +
+  geom_point() +
+  scale_x_continuous(
+    breaks = seq(13),
+    limits = c(1, 8)
+  ) + 
+  scale_y_continuous(
+    breaks = c(6, 8, 10),
+    limits = c(NA, 8)
+  ) 
+```
+
+</details>
+
+</blockquote>
+
+This is a pretty common application of scales - there are shortcuts `+xlim()` or `ylim()` if that's all you want to do.
+
+```{r}
+ggplot(pets) +
+  aes(age, weight, colour = sex) +
+  geom_point() +
+  xlim(1, 8) 
+```
+
+Note when we limit the scale in this way we're actually eliminating these points from the plot, and you'll get a warning each time. It is possible to 'zoom in' on the graph without eliminating points using the coordinate system, but we won't be covering this today.
+
+   
+# Flipping a plot
+
+So scales control the values that appear on our axes. What if we want to alter the shape of our axes? This is where coordinates become relevant, the coordinate system controls how the location variables, e.g. (x,y), are actually displayed on the screen and we can 'flip' this to flip the graph. 
+
+Let's start with a filled bar chat of our pets data:
+
+```{r}
+ggplot(pets) +
+  aes(x = animal, fill = sex) +
+  geom_bar() 
+```
+
+We can use the `coord_flip()` function which simply swaps the x and y coordinates:
+
+```{r}
+ggplot(pets) +
+  aes(x = animal, fill = sex) +
+  geom_bar() +
+  coord_flip()
+```
+<br>
+
+We have been using traditional (2D Cartesian) coordinate system, but it's possible to convert to other coordinate systems in ggplot, e.g. changing from 2D to polar coordinates, where location is based on angle, allows us to make pie charts. 
+
+An alternative to using `coord_flip()` is to change the `x` and `y` variables i.e. 
+
+```{r}
+ggplot(pets) +
+  aes(y = animal, fill = sex) +
+  geom_bar() 
+```
+
+	
+
+## Formatting of labels 
+
+The package `scales` has lots of functions that help with relabelling scales, and can be found [here](https://scales.r-lib.org/). It's great for formatting such as comma separators in the thousands places, currency (comma separators and currency symbol) and percentages. 
+
+Let’s load in the data `monthly_sales`, which has data on the sales for different branches of a store for different months. Like with the `students` dataset we need to a small bit of wrangling to get the month levels to appear in the correct order.  
+
+```{r}
+monthly_sales <- read_csv("data/monthly_sales.csv")
+
+monthly_sales <- monthly_sales %>%
+  mutate(month = factor(month, levels = c("Jan", "Feb", "March", "April"))) 
+
+ggplot(monthly_sales) +
+  aes(x = branch, y = sales, fill = month) +
+  geom_col(position = "dodge") +
+  coord_flip()
+```
+
+When we load this data in we get it being in scientific notation, which can happen for big numbers. We can do an override to make sure numbers are displayed in a 'normal' way but even then it can be hard when it's a large number to see how many 0's there are - e.g. 10000 vs. 100000? 
+
+There are a few options here - we could divide by a multiple of 10 (perhaps a thousand or 100 thousand) and make it explicit in the axis labels that is the units.
+
+```{r}
+monthly_sales %>%
+  mutate(sales_thousands = sales/1000) %>%
+ggplot() +
+  aes(x = branch, y = sales_thousands, fill = month) +
+  geom_col(position = "dodge") +
+  ylab("Sales (1000 units)") +
+  coord_flip()
+```
+
+Or can use `scales` to change formatting so have comma separators in the thousands places (or if it's for a non-UK client, many other countries round the world actually use '.' rather than ',' to denote the thousand mark!). 
+
+```{r}
+ggplot(monthly_sales) +
+  aes(x = branch, y = sales, fill = month) +
+  geom_col(position = "dodge") +
+  scale_y_continuous(labels = scales::comma) +
+  coord_flip()
+```
+
+
+
+# Extra: Transforming the scale
+
+Let's look at more dramatic changes now. Suppose we want to alter the scale in a more fundamental way. Maybe we want to make the x-axis read from high to low (instead of low to high), or adjust the y-axis to be on a log-scale so each subsequent tick mark represents a multiplicative increase e.g. (1,10,100,1000,....). To do this, we need to apply a **transformation**. Many of these exist, and they are just a mathematically different way of expressing your data. 
+
+<details>
+<summary>**Extra: Log-normal scales**</summary>
+
+
+One of the most commonly used transformations is the log-scale. The log transformation can be used to make highly skewed distributions less skewed. This can be valuable both for making patterns in the data more interpretable (may use when it's the relative changes between data that is more important than the absolute changes) and for helping to meet the assumptions of inferential statistics.
+Log transformations were used frequently when visualising coronavirus rates - particularly for comparing the changes in rates (not the rates themselves) of infections between countries. [Here's](https://www.nytimes.com/2020/03/20/health/coronavirus-data-logarithm-chart.html) a nice blog explaining the concept (you may need to open it in a private/incognito web window). 
+
+
+We can change the y axis to a log scale with `scale_y_log10`, and the x axis with `scale_x_log10`. Let's see it in action, and then we'll discuss how it works. 
+<br>
+
+Let's take a look at the dataset `pets_update` - we've had a new animal added to our pets dataset, Talia the turtoise, and it seems Oscar the cat has been in the biscuit cupboard...
+
+```{r}
+pets_update <- read_csv("data/pets_update.csv")
+
+ggplot(pets_update) +
+  aes(age, weight, colour = sex) +
+  geom_point()
+```
+
+These changes to the data make it difficult to see the patterns of most of the data which is now concentrated at the lower end of our x and y axes. 
+
+Typically you use a log-scale when you have a small number of outliers (exceptionally large or exceptionally small observations), which is true in our data, or when you want to show a relationship characterised by orders of magnitude (here powers of 10) rather than the raw amounts.
+
+If we apply the log transform now, we can see how this affects the axes.  
+
+The log transform works as follows:
+
+* The variable has the transform $f(x)$ applied to it.
+* A conventional set of equally spaced break points $(z_0,z_1,z_2,z_3,z_4)$ are generated based on the transformed values $z = f(x)$.
+* However the labels generated $(f^{-1}(z_0),f^{-1}((z_1),f^{-1}(z_2),f^{-1}(z_3),f^{-1}(z_4))$ are based on the original variables $x = f^{-1}(z)$.   
+
+First let's log transform the y-axis: 
+
+```{r}
+ggplot(pets_update) +
+  aes(age, weight, colour = sex) +
+  geom_point() +
+  scale_y_continuous(trans = "log10", name = "log(weight)")
+```
+<br>
+
+And now both the x and y axis:
+
+```{r}
+ggplot(pets_update) +
+  aes(age, weight, colour = sex) +
+  geom_point() +
+  scale_y_continuous(trans = "log10", name = "log(weight)") +
+  scale_x_continuous(trans = "log10", name = "log(age)")
+```
+<br> 
+
+Now it is easier to see the relative differences between each animal. 
+
+*However* be careful when using transformations, it is important to be careful when using log transformations that your audience understands that it is not the raw values being plotted and it is a transformation of the data. 
+
+</details>
+       
+
+# Additional Resources
+
+* [ggplot2 home page](https://ggplot2.tidyverse.org)
+
+ 
+
+
+
+
+
+
+

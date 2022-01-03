@@ -1,0 +1,392 @@
+---
+title: "Control Flow"
+output: html_notebook
+---
+
+## If Statements
+
+```{r}
+if(condition) {
+  #code that runs if the condition is met
+}
+```
+
+# Conditional Operators
+
+`==` is equal to
+`!=` not equal to
+`>` greater than
+`<` less than
+`%in%` is in the set
+
+```{r}
+if (5>3) {
+  print("yes")
+}
+```
+
+```{r}
+x <- 7
+y <- 8
+if (x <= y) {
+  print("it's less than or equal to y")
+}
+```
+
+Write an if statement that prints 'Yes that divides by 2' if a number x is divisible by 2 (hint: use %% 2 == 0 as your expression), try it out for different values of x.
+
+```{r}
+x <- 11
+
+if (x %% 2 == 0) {
+  print("Yes that divides by 2")
+}
+```
+
+## Nested Ifs
+
+# We can write more complicated if statements
+
+```{r}
+
+if(10 != 5){
+  if(2 == 0){
+    print("the second condition is met")
+  }
+  print("the first condition is met")
+}
+```
+
+```{r}
+
+x <- 10
+y <- 2
+
+if (x > y) {
+  print("Start of outer if block")
+
+  if (x %% y == 0) {
+    print("Inner if block 1")
+  }
+
+  if (y %in% c(1:5)) {
+    print("Inner if block 2")
+  }
+
+  print("End of outer if block")
+}
+
+print("After if statement")
+```
+
+## If . . . Else
+
+```{r}
+if (condition) {
+  # do something
+} else {
+  # do something else
+}
+```
+
+```{r}
+if(rain) {
+  wear_wellies()
+} else {
+  wear_wellies()
+}
+```
+
+```{r} 
+if (4 < 5) {
+  print("yes, its less")
+} else {
+  print("no, its not")
+}
+```
+
+```{r}
+if(2 %in% 50:100) {
+  print("its in the set")
+} else{
+  print("its not in the set")
+}
+```
+
+# Taskles
+
+#Edit your code from the first exercise so that it prints ‘Yes that divides’ when x is divisible by 2, and prints ‘No that does not divide’ otherwise.
+
+```{r}
+x <- 9
+
+if (x %% 2 == 0) {
+  print("yes that divides")
+} else{
+  print("no that does not divide")
+}
+```
+
+# Task
+
+```{r}
+
+
+if_else_function <- function(x, y){
+  if (x %in% c(3, 4, 5)){
+    
+    print("x is in our list")
+    
+    if (x == 5){
+      
+      print("x is exactly 5")
+      
+    }
+    
+  } else {
+    
+    print("Start of else statement")
+    
+    if (y %% x == 0){
+      
+      print("x divides y")
+    
+    } else{
+      
+      print("x does not divide y")
+    }
+    
+    print ("End of else statement")
+    
+  }
+}
+
+if_else_function(5, 10)
+```
+
+# Loops
+
+## For Loops
+
+# allow you to perform an action repeatedly
+
+# R for loop syntax
+
+```{r}
+for(item in basket) {
+  hang_up(item)
+}
+```
+
+# Let's write a for loop to print the following statements.
+
+```{r}
+print("The day is Monday")
+print("The day is Tuesday")
+print("The day is Wednesday")
+print("The day is Thursday")
+print("The day is Friday")
+```
+
+```{r}
+weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+
+for (x in weekdays) {
+  phrase <- paste("The day is", x, "oooweee", sep = " ")
+  print(phrase)
+}
+```
+
+Task that Loop!
+
+Change the code below to use a for loop:
+
+print(1)
+print(2)
+print(3)
+print(4)
+print(5)
+
+```{r}
+numbers <- 1:5
+
+for (x in numbers) {
+  phrase <- paste("print(", x, ")", sep = "")
+  print(phrase)
+}
+
+# Actually what David wanted
+
+numbers <-  c(1, 2, 3, 4, 5)
+
+for (num in numbers) {
+  print(num)
+}
+```
+
+## While Loops
+
+while (some condition) {
+  do something
+}
+
+while (drive_filled_with_snow) {
+ clear_drive()
+}
+
+### A more R example
+
+```{r}
+
+# set a beginning value
+current_value <- 1
+# set a stop value
+stop_value <- 10
+
+while(current_value < stop_value) {
+  print(current_valu)
+}
+
+# will print 1 forever
+
+# set a beginning value
+current_value <- 1
+# set a stop value
+stop_value <- 10
+
+while(current_value < stop_value) {
+  print(current_value)
+  # introduce a counter/ something to change the condition
+  current_value <- current_value + 1
+}
+```
+
+```{r}
+weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+
+for (i in 1:length(weekdays)) {
+  print(i)
+  phrase <- paste("The day is", weekdays[i], "oooweee", sep = " ")
+  print(phrase)
+}
+
+```
+```{r}
+weekdays <- c("Monday", "Tuesday", "Wednesday", "Thursday", "Friday")
+
+for (i in 1:length(weekdays)) {
+  plural <- paste0(weekdays[i], "s")
+  print(plural)
+}
+
+# We go through for the length of this weekdays vector, then just adding an s to the end of each bit within weekdays and printing
+
+```
+
+## Nested Loops
+
+# Loops within loops
+
+```{r}
+# floor rounds to nearest whole number
+
+#rnorm generates a small random number
+
+my_matrix <- replicate(5, floor(rnorm(5) *100))
+
+my_matrix
+```
+for row in rows{
+ for col in cols{
+  print(my_matrix[row, column])
+ }
+}
+ 
+```{r}
+n_rows <- nrow(my_matrix)
+n_cols <- ncol(my_matrix)
+
+for(row in 1:n_rows) {
+  for(col in 1:n_cols){
+    print(my_matrix[row, col])
+  }
+}
+
+# This would work for a matrix and a data frame
+```
+
+# Taskles
+
+```{r}
+product_matrix <- matrix(nrow = 5, ncol = 5)
+product_matrix
+
+# This iterates through every row of the matrix
+for (x in 1:nrow(product_matrix)){
+# This iterates  through every column of the matrix
+  for (y in 1:ncol(product_matrix)){
+    print(x)
+    print(y)
+    product_matrix[x, y] <- x * y
+  }
+}
+
+# Need to get the actual answer from the notes
+
+```
+
+```{r}
+# Create a numeric vector
+my_vector <- c(1, 4, 6, 2, 4)
+
+# Create a temporary numeric vector (l = 5)
+temp_vector <- numeric(length(my_vector))
+
+for (i in 1:length(my_vector)) {
+  temp_vector[i] <- my_vector[i] + 1
+}
+ # Overwrite initial vector
+my_vector <- temp_vector
+
+my_vector
+```
+
+```{r}
+my_vector
+my_vector + 1
+```
+
+## The Apply Family of Functions
+
+`apply()`
+`lapply()`
+`sapply()`
+`purr::map()`
+
+```{r}
+lapply(iris, class)
+
+# sapply will try to return the simplest data structure it can (vectors)
+
+#lapply will usually return a list
+```
+
+# Taskles
+
+#Using the starwars list from the CodeClanData package, do the following:
+#Print the name for every character in the list You can use for loops or apply
+
+```{r}
+for (name in starwars$name) {
+  print(name)
+}
+
+# OR
+
+sapply(CodeClanData::starwars, '[[', "name")
+
+# OR
+
+starwars[[1]]
+```
+

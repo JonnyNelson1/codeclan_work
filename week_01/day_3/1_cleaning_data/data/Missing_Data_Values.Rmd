@@ -113,3 +113,6 @@ payment_new_category <- payment_method_replaced %>%
 
 payment_new_category
 ```
+
+```
+

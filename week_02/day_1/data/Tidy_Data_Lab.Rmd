@@ -1,0 +1,58 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+country_data <- read_csv("data/country_data.csv")
+```
+```{r}
+country_data
+```
+
+# Question 1: Load in the country_data.csv file and take a look at it. What needs changed in this to make it tidy? Which columns need made into long format, and which need spread to rows?
+
+# - cases and population needed to be moved up into columns
+
+# - years need to brought down into variables, years. 
+
+# Split up country to country and ID
+
+# Question 2: Do the appropriate pivoting of your columns using R
+
+```{r}
+country_data_edited <- country_data %>%
+  
+  pivot_longer(cols = starts_with("Y"),
+               names_to = "year",
+               values_to = "number_count",
+               names_prefix = "Y",
+               names_transform = list(year = as.numeric)) %>%
+  
+# mutate(year = as.numeric(year)) %>%
+
+# want to change from character to dbl for years
+  
+# mutate() function
+  
+# can use name_transform within the pivot_longer
+  
+  pivot_wider(names_from = type,
+              values_from = number_count)
+
+country_data_edited
+```
+
+# Question 3: Separate the country variable so you have the name in one column and the number in another.
+
+```{r}
+country_data_edited %>%
+  
+  separate(country,
+           c("country_number", "country_name"),
+           sep = "\\. ") %>%
+  
+  unite(code, c("code_letter", "code_numb"),
+        sep = "")
+```
+

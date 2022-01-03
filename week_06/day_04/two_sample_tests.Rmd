@@ -1,0 +1,310 @@
+---
+title: "two_sample_tests"
+author: "Jonny Nelson"
+date: "09/12/2021"
+output: html_document
+---
+
+```{r}
+# Be wary of loading janitor after tidyverse
+
+library(infer)
+library(janitor)
+library(prob)
+library(tidyverse)
+```
+
+# Apartments in Nice and Algarve
+
+# Reading in the data
+
+```{r}
+algarve_data <- read_csv("3_two_sample_tests/data/algarve.csv") %>%
+  clean_names()
+
+nice_data <- read_csv("3_two_sample_tests/data/nice.csv") %>%
+  clean_names()
+```
+
+# Apend the data-sets
+
+```{r}
+apart_prices <- bind_rows(nice_data, algarve_data, .id = "location") %>%
+  mutate(location = if_else(location == "1",
+                            "nice",
+                            "algarve")) %>%
+  select(-x1)
+```
+
+# Visualise the new data
+
+```{r}
+apart_prices %>%
+  group_by(location) %>%
+  summarise(n = n())
+```
+
+```{r}
+apart_prices %>%
+  ggplot(aes(x = location, y = price)) +
+  geom_boxplot()
+```
+
+# Null Distribution
+
+```{r}
+null_distributions <- apart_prices %>%
+  specify(price ~ location) %>%
+  hypothesise(null = "independence") %>%
+  generate(reps = 10000, type = "permute") %>%
+  calculate(stat = "diff in means",
+            order = c("algarve", "nice"))
+
+null_distributions
+```
+
+# Observed Stat
+
+```{r}
+observed_stat <- apart_prices %>%
+  specify(price ~ location) %>%
+  calculate(stat = "diff in means",
+            order = c("algarve", "nice"))
+```
+
+# Visualising the Null Distribution
+
+```{r}
+null_distributions %>%
+  visualise(bins = 30) +
+    shade_p_value(obs_stat = observed_stat,
+                  direction = "right")
+```
+
+# Calculating the p_values
+
+```{r}
+p_value <- null_distributions %>%
+  get_p_value(obs_stat = observed_stat,
+             direction = "right")
+
+p_value
+```
+
+
+# Florence and Corfu
+
+
+# Reading in the data
+
+```{r}
+florence_data <- read_csv("3_two_sample_tests/data/florence.csv") %>%
+  clean_names()
+
+corfu_data <- read_csv("3_two_sample_tests/data/corfu.csv") %>%
+  clean_names()
+
+corfu_data %>%
+  summarise(mean = mean(price))
+
+florence_data %>%
+  summarise(mean = mean(price))
+```
+
+# Apend the data-sets
+
+```{r}
+apart_prices <- bind_rows(florence_data, corfu_data, .id = "location") %>%
+  mutate(location = if_else(location == "1",
+                            "florence",
+                            "corfu")) %>%
+  select(-x1)
+```
+
+# Visualise the new data
+
+```{r}
+apart_prices %>%
+  group_by(location) %>%
+  summarise(n = n())
+```
+
+```{r}
+apart_prices %>%
+  ggplot(aes(x = location, y = price)) +
+  geom_boxplot()
+```
+
+# Null Distribution
+
+```{r}
+null_distributions <- apart_prices %>%
+  specify(price ~ location) %>%
+  hypothesise(null = "independence") %>%
+  generate(reps = 70000, type = "permute") %>%
+  calculate(stat = "diff in means",
+            order = c("florence", "corfu"))
+
+null_distributions
+```
+# Observed Stat
+
+```{r}
+observed_stat <- apart_prices %>%
+  specify(price ~ location) %>%
+  calculate(stat = "diff in means",
+            order = c("florence", "corfu"))
+```
+
+# Visualising the Null Distribution
+
+```{r}
+null_distributions %>%
+  visualise(bins = 30) +
+    shade_p_value(obs_stat = observed_stat,
+                  direction = "left")
+```
+
+# Calculating the p_values
+
+```{r}
+p_value <- null_distributions %>%
+  get_p_value(obs_stat = observed_stat,
+             direction = "left")
+
+p_value
+
+# Null Hypothesis: population mean of florence - population mean of corfu is 0
+
+# Altnerate Hypothesis: florence sign lower than corfu
+
+# population mean of florence - population mean of corfu < 0 
+```
+# 2-Sample Test: Paired/Dependent
+
+```{r}
+books <- read_csv("3_two_sample_tests/data/ucla_textbooks_f18.csv")
+```
+
+```{r}
+glimpse(books)
+```
+
+```{r}
+books_diff <- books %>%
+  mutate(diff_new = bookstore_new - amazon_new) %>%
+   dplyr::filter(!is.na(diff_new))
+
+books_diff %>%
+  ggplot(aes(x = diff_new)) +
+  geom_histogram(col = "white")
+  
+```
+# Null Hypothesis
+
+H0: mu(diff_new) = 0
+HA: mu(diff_new) != 0
+
+# Null Distribution
+
+```{r}
+null_distribution <- books_diff %>%
+  specify(response = diff_new) %>%
+  hypothesise(null = "point", mu = 0) %>%
+  generate(reps = 50000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+
+# Null Distribution
+
+```{r}
+null_distribution %>%
+  visualise(bins = 100) +
+  shade_p_value(obs_stat = observed_stat,
+                direction = "both")
+```
+
+
+```{r}
+observed_stat <- books_diff %>%
+  specify(response = diff_new) %>%
+  calculate(stat = "mean")
+
+observed_stat
+```
+
+# Calcaulte p_value
+
+```{r}
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = observed_stat,
+              direction = "both")
+
+p_value
+
+# We are able to reject the null hypothesis as the p_value is below 5%, therefore we fail to reject the alternative hypothesis that the diff_mean new book price -> significantly different.
+```
+
+
+# Testing the Difference in Proportions
+
+```{r}
+poll <- read_csv("3_two_sample_tests/data/election_data.csv")
+
+head(poll)
+```
+
+# Visualise the data we have
+
+```{r}
+ggplot(poll, aes(x = vote, fill = gender)) +
+  geom_bar(position = "fill")+
+  coord_flip()
+```
+
+# Difference in Proportion in the observed statistic
+
+```{r}
+observed_stat <- poll %>%
+  specify(gender ~ vote,
+          success = "woman") %>%
+  calculate(stat = "diff in props",
+            order = c("obama", "romney"))
+
+observed_stat
+```
+
+```{r}
+null_distributions <- poll %>%
+  
+  specify(gender ~ vote,
+          success = "woman") %>%
+  
+  hypothesise(null = "independence") %>%
+  
+  generate(reps = 1000,
+           type = "permute") %>%
+  
+  calculate(stat = "diff in props",
+            order = c("obama", "romney"))
+
+null_distributions
+```
+
+# Visualise the Null Distribution
+
+```{r}
+null_distributions %>%
+  visualise(bins = 30) +
+  shade_p_value(obs_stat = observed_stat,
+                direction = "both")
+```
+
+```{r}
+p_value <- null_distributions %>%
+  get_p_value(obs_stat = observed_stat,
+              direction = "both")
+
+p_value
+```
+

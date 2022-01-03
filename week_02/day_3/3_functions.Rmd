@@ -1,0 +1,128 @@
+---
+title: "Functions"
+output: html_notebook
+---
+
+```{r}
+library
+
+# A function is an isolated block of code, that has an input and spits out an output.
+```
+
+```{r}
+x <- c("effeaeff", "tewetwetwetwetwetwetwet")
+
+nchar(x)
+
+# These are both the same, just all the arugments are filled in. 
+
+nchar(x = x, type = 'chars', allowNA = TRUE, keepNA = FALSE)
+
+nchar(x, 'chars', TRUE, NA)
+```
+
+```{r}
+paste("hello", "good", "bye", collapse = "hi")
+```
+```{r}
+my_fun <- function(x, y, z) {
+  #asfsgegsefsefse
+  #sefsefsef
+  result
+}
+my_fun()
+
+
+```
+
+```{r}
+mutiple_by_5 <- function(x) {
+  return(x * 5)
+}
+
+mutiple_by_5(5)
+```
+
+```{r}
+multiply_by <- function(x, y) {
+  x * y
+}
+
+for(i in 1:5) {
+multiply_by(1:5, i)
+}
+```
+
+```{r}
+library(tidyverse)
+
+beaver1
+
+cheeky_function <- .%>%
+  select(temp, activ) %>%
+  group_by(activ) %>%
+  summarise(mean_temp = mean(temp))
+
+beaver1 %>%
+  cheeky_function
+
+beaver2 %>%
+  cheeky_function
+
+# this creates functions to use on different data sets
+  
+```
+
+# Taskles
+
+```{r}
+food_prices <- c(12,25,13,14,2)
+
+make_price <- .%>%
+  paste0(prefix = "£")
+
+food_prices %>%
+  make_price()
+
+# The answer
+
+into_price <- function(amount) {
+  
+  paste0("£", round(amount, 2))  
+}
+
+into_price(food_prices)
+  
+```
+# Taskles 2
+
+```{r}
+triangle_noomber <- function(x) {
+  return(x * (x + 1)/ 2)
+}
+
+triangle_noomber(4)
+```
+
+$$\frac{n(n+1)}{2}$$
+
+```{r}
+
+triangular_number <- function(x) {
+  numerator <- x * (x + 1)
+  numerator / 2
+}
+tri_loop <- function(x) {
+  i <- 0
+  while (i < x) {
+    i <- i + 1
+    result <- triangular_number(i)
+    cat(result, ‘\n’)
+  }
+}
+debugonce(tri_loop)
+tri_loop(5)
+
+```
+
+

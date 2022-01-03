@@ -1,0 +1,100 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+library(tidyr)
+```
+
+```{r}
+# create subject info tibble
+subject_hr <- tibble( name = c("SUBJ01","SUBJ02","SUBJ03"), 
+  hr_am = c(68,72,68), 
+  hr_pm = c(58,89,52))
+
+subject_hr
+```
+
+# Each variable needs to have its own column.
+
+```{r}
+subject_hr %>%
+  pivot_longer(cols = c("hr_am", "hr_pm"),
+               names_to = "measurement_time",
+               names_prefix = "hr_",
+               values_to = "heartrate",
+               )
+
+?pivot_longer
+```
+
+```{r}
+income <- tibble(religion = c("Agnostic","Atheist","Buddhist", "Catholic"), 
+  X10k = c(12,25,3,75), 
+  X10k_to_20k = c(34,14,6,60),
+  X20k_to_30k = c(45,22,10,110))
+
+income
+```
+# Column headings are values instead of variable names
+
+```{r}
+income %>%
+  pivot_longer(cols = c("X10k", "X10k_to_20k", "X20k_to_30k"),
+               names_to = "income_brackets",
+               names_prefix = "X")
+```
+
+```{r}
+# print out the data
+messy_orders <- tibble( name = c("Joe Bloggs","Jane Smith","Penny Jones"), 
+  order_info = c("XY7282/29-06-19","LO0182/15-03-19","AS6812/04-06-19"), 
+  order_amount = c(58.00,125.00,75.25))
+
+messy_orders
+```
+
+```{r}
+tidy_orders <- messy_orders %>%
+  separate(order_info,
+           c("order_number", "date"),
+           sep = "/")
+
+tidy_orders
+```
+
+```{r}
+hospital_visits <- read_csv("data/hospitals93to98.csv")
+
+hospital_visits
+```
+
+```{r}
+hvl <- hospital_visits %>%
+  pivot_longer(cols = starts_with("FY"),
+               names_to = "year",
+               values_to = "visit_numbers",
+               names_prefix = "FY") %>%
+  
+  pivot_wider(names_from = Field,
+              values_from = visit_numbers) %>%
+  
+  separate(IcdChapter,
+           c("code", "description"),
+           sep = "\\. ") %>%
+  
+  unite(disease, c("code", "description"),
+        sep = "->")
+
+hvl
+
+# Use "\\" to escape the general meaning in R
+```
+
+```
+

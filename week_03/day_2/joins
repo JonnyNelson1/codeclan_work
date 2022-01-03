@@ -1,0 +1,155 @@
+-- Joins
+
+-- Get a list of all the animals that have diet plans 
+-- together with the diet plans they are on
+
+-- INNER join 
+
+SELECT
+	animals.*,
+	diets.*
+FROM animals INNER JOIN diets 
+ON animals.diet_id = diet_id;
+
+-- We can control the columns that are returned
+
+SELECT 
+	animals.name,
+	animals.species,
+	diets.diet_type 
+FROM animals INNER JOIN diets 
+ON animals.diet_id = diet_id;
+
+-- We can also table aliases to write more succintley 
+
+SELECT 
+	a.name,
+	a.species,
+	d.diet_type 
+FROM animals AS a INNER JOIN diets AS d
+ON a.diet_id = d.id;
+
+-- Find any known dietary requirements for animals 
+-- over four years old
+
+SELECT
+	a.id,
+	a.name,
+	a.species,
+	a.age,
+	d.diet_type
+FROM animals AS a INNER JOIN diets as d
+ON a.diet_id = d.id 
+WHERE a.age > 4;
+
+-- Break down the number of animals in the zoo
+-- by their diet type.
+
+SELECT 
+	d.diet_type,
+	COUNT(a.id)
+FROM animals AS a INNER JOIN diets AS d 
+ON a.diet_id = d.id 
+GROUP BY d.diet_type;
+
+-- Get the details of all herbivores in the zoo
+
+SELECT
+	a.*,
+	d.diet_type 
+FROM animals AS a INNER JOIN diets as d
+ON a.diet_id = d.id 
+WHERE diet_type = 'herbivore';
+
+-- Left Join and Right Join 
+
+SELECT 
+	a.*,
+	d.*
+FROM animals AS a LEFT JOIN diets as d 
+ON a.diet_id = d.id;
+
+-- return details on ALL animals in the zoo,
+-- together with their dietary requirements 
+-- if the have any 
+
+SELECT 
+	a.*,
+	d.*
+FROM animals AS a LEFT JOIN diets as d 
+ON a.diet_id = d.id;
+
+-- Taskles
+
+SELECT 
+	a.*,
+	d.*
+FROM animals AS a RIGHT JOIN diets as d 
+ON a.diet_id = d.id;
+
+-- Animals to diet_type is a one-to-many relationship
+
+-- Return how many animals follows a certain diet?
+
+SELECT 
+	d.diet_type,
+	COUNT(a.id) AS num_animals
+FROM animals AS a RIGHT JOIN diets AS d 
+ON a.diet_id = d.id 
+GROUP BY d.diet_type;
+
+
+-- Full Outer Join
+
+SELECT 
+	a.*,
+	d.*
+FROM animals AS a FULL OUTER JOIN diets as d 
+ON a.diet_id = d.id;
+
+
+-- Many to Many Relationships
+
+-- Get rota for the keepers and animals they look after
+
+SELECT 
+	a.name AS animal_name,
+	a.species,
+	cs.day,
+	k.name AS keeper_name
+FROM
+	(animals AS a INNER JOIN care_schedule AS cs
+	ON a.id = cs.animal_id)
+INNER JOIN keepers AS k
+ON cs.keeper_id = k.id
+ORDER BY a.name, cs.day 
+
+-- Taskle -- Same as above, only for Ernest the Ssssssnake
+
+SELECT 
+	a.name AS animal_name,
+	a.species,
+	cs.day,
+	k.name AS keeper_name
+FROM
+	(animals AS a INNER JOIN care_schedule AS cs
+	ON a.id = cs.animal_id)
+INNER JOIN keepers AS k
+ON cs.keeper_id = k.id
+WHERE a.name = 'Ernest'
+
+-- Self-Join 
+
+SELECT *
+FROM keepers;
+
+-- Get a table showing the name of each keeper together with 
+-- the name of their manager (if they have a manager)
+
+SELECT 
+	k.name AS employee_name,
+	m.name AS manager_name
+FROM keepers AS k
+LEFT JOIN keepers AS m 
+ON k.manager_id = m.id 
+

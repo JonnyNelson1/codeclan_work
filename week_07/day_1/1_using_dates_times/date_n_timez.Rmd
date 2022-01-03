@@ -1,0 +1,270 @@
+---
+title: "Untitled"
+author: "Jonny Nelson"
+date: "13/12/2021"
+output: html_document
+---
+
+## Formatting dates and times can be tricky, lots of different ways to enter them into data sets.
+
+## ISO-8601 FORMAT - universal way to write times
+
+YEAR - MONTH - DAY
+
+# IS0-8601
+
+1. YEAR - MONTH - DAY - HH:MM:SS
+
+2. 4 digit year is the minimum
+
+3. UTC - coordinated universal time
+
+4. A few different formats
+
+HH:MM:SS.SS
+HH:MM:SS
+HH:MM
+HH
+
+5. UTC - GMT?
+
+6. Dates and Times represented in a few ways
+
+- 2021-12-13T10:04:10+00:00
+- 2021-12-13T10:04:10Z
+- 20211213T100410Z
+
+```{r}
+library(lubridate)
+```
+
+```{r}
+stephs_birthday <- "09-01-2022"
+
+stephs_birthday
+
+class(stephs_birthday)
+```
+
+```{r}
+my_date <- dmy(stephs_birthday)
+
+class(my_date)
+```
+
+```{r}
+mdy_h("January 9th, 2012 10")
+```
+```{r}
+mdy_hms("01-09-13 10:18:45")
+```
+
+```{r}
+ymd(20190909)
+
+
+mdy(12262012)
+```
+
+# Loading the Netflix data set
+
+```{r}
+library(tidyverse)
+
+netflix <- read_csv("data/netflix.csv")
+
+head(netflix)
+```
+
+
+```{r}
+netflix <- netflix %>%
+  mutate(date_added = mdy(date_added))
+```
+
+```{r}
+netflix <- netflix %>%
+  mutate(
+    day = day(date_added),
+    month = month(date_added, label = TRUE, abbr = FALSE),
+    year = year(date_added),
+    weekday = weekdays(date_added, abbreviate = TRUE)
+  )
+
+netflix
+```
+
+# Lets Re-Join the columns made
+
+```{r}
+netflix <- netflix %>%
+  mutate(made_date = make_datetime(year, month, day, hour = 12, min = 12, sec = 15, tz = "EST" ))
+
+netflix %>% select(made_date) %>% pull()
+```
+
+# CalculatinG time spans
+
+ - difftime: represents how many days difference
+ - period: timespans (calendars)
+ - durations: actual exact number of seconds
+
+```{r}
+# Calc how many days a tv show has been released for
+
+netflix <- netflix %>%
+  mutate(time_diff_time = today() - date_added) %>%
+  select(time_diff_time, date_added)
+```
+
+# Period representation
+
+```{r}
+netflix <- netflix %>%
+  mutate(time_period = as.period(today() - date_added),
+         time_seconds = as.numeric(time_period, "seconds"),
+         time_years = as.numeric(time_period, "years")) 
+```
+# Netlfix promotes new releases for two weeks before release.
+
+Netlfix takes shows/movies down after 4 months
+
+```{r}
+netflix <- netflix %>%
+  mutate(promo_date = date_added - weeks(2),
+         removal_date = date_added + months(4))
+
+netflix %>%
+  select(date_added, promo_date, removal_date)
+```
+
+# Durations:
+
+```{r}
+netflix <- netflix %>%
+  mutate(time_duration = as.duration(today() - date_added))
+
+netflix %>%
+  select(date_added, time_duration, time_diff_time, time_years)
+```
+# Time Zones 
+
+```{r}
+# Tells you where you are
+
+Sys.timezone()
+```
+
+```{r}
+ymd_hms("2021-12-12 11:20:22", tz = "Atlantic/Faeroe")
+```
+ `forcetz` : add a time zone, doesnt change date/tie
+ `with_tz` : figures out what date and time would be if yyou were in that time zone
+
+```{r}
+netflix <- netflix %>%
+  mutate(date_tz1 = force_tz(date_added, tzone = "Asia/Singapore"),
+          date_tz2 = with_tz(date_added, tzone = "Asia/Singapore"))
+
+netflix %>%
+  select(date_added, date_tz1, date_tz2)
+```
+
+# Question 1 - Load in the tour_de_france.csv dataset and have a look at it. What issues do you see with the dates in this?
+
+```{r}
+tour_de_france <- read_csv("data/tour_de_france.csv")
+
+# start_date in character format (day-month-year)
+# time_overall and time_margin not in any specific period
+# died is in (day/month/year)
+# born is in (day month year - character)
+```
+
+# Question 2
+
+```{r}
+tour_de_france <- tour_de_france %>%
+  mutate(start_date = mdy(start_date),
+         born = dmy(born),
+         died = mdy(died))
+```
+
+# Question 3 - Now do a data check. Tour de France begins in June or July (usually, COVID was the exception). Create a month column which checks whether or not this is consistent and you only have these months in the start_date options.
+
+# Which month is most popular for starting?
+
+```{r}
+tour_de_france %>%
+  mutate(start_date_month = month(start_date, label = TRUE, abbr = FALSE)) %>%
+  summarise(most_popular_start_month = max(start_date_month))
+```
+
+# Question 4 - What day of the week is most common for the tour to start?
+
+```{r}
+tour_de_france %>%
+  mutate(start_date_weekday = weekdays(start_date, abbreviate = TRUE)) %>%
+  summarise(most_popular_start_day = max(start_date_weekday))
+```
+
+# Question 5 - Add a date column to your dataset that captures which date each tour finished? Hint: It lasts 23 days.
+
+```{r}
+tour_de_france <- tour_de_france %>%
+  mutate(date_finished = start_date + days(23))
+
+tour_de_france
+```
+
+# Question 6 - What age was each rider when they started the tour? Hint: you’ll need to calculate the time period between when the race started, and when they were born. You can then format this (recap the “periods” section in the classnotes).
+
+```{r}
+tour_de_france <- tour_de_france %>%
+  
+  mutate(age_of_rider = as.numeric(as.period(start_date - born), "years"),
+         age_of_rider = floor(age_of_rider))
+```
+
+# Question 7 - Let’s say a plane leaves Sydney Australia at 2.15pm on the 7th August 2018, and arrives at 5.40am on the 8th August 2018 in London. Create these two dates with the appropriate time zones.
+
+# Question 8 - Flight Duration
+
+```{r}
+take_off <- "7th August 2018 14:15"
+touch_down <- "8th August 2018 05:40"
+
+take_off <- dmy_hm(take_off, tz = "Australia/Sydney")
+
+touch_down <- dmy_hm(touch_down, tz = "Europe/London")
+
+as.period(touch_down - take_off)
+```
+
+# Question 9 - Say you left London at 6.20am on the 10th August 2018, and the total flight time including stop-overs was 28 hours and 46 minutes. At what time and date would you arrive in Sydney, Australia?
+
+```{r}
+take_off_2 <- dmy_hm("10th August 2018 06:20",
+                     tz = "Europe/London")
+
+flight_to_aus = take_off_2 + hours(28) + minutes(46)
+
+touch_down_2 = with_tz(flight_to_aus, tz = "Australia/Sydney")
+
+touch_down_2
+
+# OlsonNames()
+```
+
+```{r}
+library(slider)
+```
+
+```{r}
+library(tidyverse)
+# plot the data 
+ggplot(elec_rolling) + 
+  geom_line(aes(x = Date, y = Temperature), colour = "grey") + 
+  geom_line(aes(x = Date, y = temp_moving_avg), colour = "red")
+```
+

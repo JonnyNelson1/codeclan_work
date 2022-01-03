@@ -1,0 +1,114 @@
+---
+title: "Coding Best Practises"
+output: html_notebook
+---
+
+# Can use the update.packages() in the console to get everything up-to-date
+
+# Naming convention of data frames
+
+```{r}
+Dates
+
+FileOne
+
+file.one
+
+af <- read_csv("miles_run_time.csv")
+
+# Don't start with capital letters, do like this instead;
+
+dates
+
+file_one 
+
+file_1
+
+# Cannot have numbers at the start of a variable. 
+
+runtime <- read_csv("miles_run_time.csv")
+
+# Stick to nouns for the naming concention of data frames.
+```
+
+
+```{r}
+filter( students,age==12)
+
+# No space after the brackets, space after the comma, and spaces between age == 12
+
+filter(students, age == 12)
+
+```
+
+```{r}
+"Text"
+
+'Text'
+
+'Let's
+
+"Let's"
+
+# If there is an apostrophe in the text, use double quotation marks
+```
+
+```{r, echo=2}
+demo_data <- select(mydata, name, age, gender)
+
+# select only these variables, as the business question is about these variables
+
+# echo = 2, hides the code when output into html
+```
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+amount_spent <- c(9.1,8.55,14.32,14.17,14.34,7.97,9.79,11.47,12.44)
+category <- c("Lunch", "Dinner", "Lunch", "Lunch", "Cinema", "Drinks", "Lunch",
+              "Lunch", "Dinner") 
+
+my_week_of_spending <- tibble(amount_spent = amount_spent,
+                              spending_category = category)
+
+# str(my_week_of_spending)
+# View(my_week_of_spending)
+
+my_week_of_spending
+
+#How much I spent in a week
+summarise(my_week_of_spending, sum(amount_spent))
+
+#How much I spent on Lunch
+summarise(filter(my_week_of_spending, spending_category == "Lunch"), sum(amount_spent))
+
+
+
+```
+
+
+```{r}
+AmountSpent <- c(9.1, 8.55, 14.32, 14.17, 14.34, 7.97, 9.79, 11.47, 12.44)
+Category <- c(
+  "Lunch",
+  "Dinner",
+  "Lunch",
+  "Lunch",
+  "Cinema",
+  "Drinks",
+  "Lunch",
+  "Lunch",
+  "Dinner"
+)
+my.week.of.spending <- tibble(AmountSpent = AmountSpent, SpendingCategory = Category)
+str(my.week.of.spending)
+View(my.week.of.spending)
+my.week.of.spending
+summarise(my.week.of.spending, sum(AmountSpent))
+summarise(filter(my.week.of.spending, SpendingCategory == "Lunch"), sum(AmountSpent))
+
+# Go to addins, then do "Style Selection".
+```
+

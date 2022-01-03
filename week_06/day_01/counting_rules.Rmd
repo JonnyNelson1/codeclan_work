@@ -1,0 +1,105 @@
+---
+title: "counting_rules"
+author: "Jonny Nelson"
+date: "06/12/2021"
+output: html_document
+---
+
+```{r}
+roll_dice <- rolldie(2)
+```
+
+# Probability of dice totalling 7 
+
+```{r}
+total_seven <- s %>%
+  filter(X1 + X2 == 7)
+
+prob_total_seven <- nrow(total_seven)/nrow(roll_dice)
+```
+
+# Multi-Step Experiments 
+
+```{r}
+coin_toss <- tosscoin(1)
+
+total_tables <- merge(roll_dice, coin_toss)
+
+total_tables_01 <- total_tables  %>%
+  filter(X1 + X2 == 7 & toss1 == "H")
+
+prob_total_seven_and_head <- nrow(total_tables_01)/nrow(total_tables)
+```
+
+# Permutations 
+
+```{r}
+library(gtools)
+```
+```{r}
+# create vector of choices contains ten employees, n = 10. 
+employees <- c("Alice", "Bob", "Carole", "David", "Elaine", "Fred", "Gabra", "Hua", "Inigo", "Hugo")
+
+# Choose three at a time, r = 3
+# Don't replace an employee once chosen: repeats.allowed = FALSE
+seniors <- as_tibble(permutations(n = 10,
+                                  r = 3,
+                                  v = employees,
+                                  repeats.allowed = FALSE))
+
+# rename the variables in seniors to something better
+seniors <- seniors %>%
+  rename(
+    CEO = V1,
+    CTO = V2,
+    COO = V3
+  )
+
+# let's see what the seniors matrix looks like
+seniors
+```
+
+# Task: Probability that CEO is Alice and CTO is Bob
+
+```{r}
+alice_CEO_and_bob_CTO <- seniors %>%
+  filter(CEO == "Alice" & CTO == "Bob")
+
+alice_CEO_and_bob_CTO
+
+probability <- nrow(alice_CEO_and_bob_CTO)/nrow(seniors)
+```
+
+# Combinations 
+
+```{r}
+n_draws <- choose(50, 6)
+n_draws
+
+10 /n_draws
+```
+
+# Task 2
+
+```{r}
+# create vector of choices contains five flavours 
+
+flavours <- c("vanilla", "chocolate", "raspberry", "strawberry", "pistachio") 
+
+# Choose three at a time, r = 3
+# Don't replace a flavor once chosen: repeats.allowed = FALSE
+
+combinations_of_3 <- as_tibble(combinations(n = 5,
+                                  r = 3,
+                                  v = flavours,
+                                  repeats.allowed = FALSE))
+
+# Choose three at a time, r = 3
+# Do replace a flavor once chosen: repeats.allowed = TRUE
+
+combinations_of_3_repeat <- as_tibble(combinations(n = 5,
+                                         r = 3,
+                                         v = flavours,
+                                         repeats.allowed = TRUE))
+```
+

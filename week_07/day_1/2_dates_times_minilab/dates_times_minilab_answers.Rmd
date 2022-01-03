@@ -1,0 +1,208 @@
+---
+title: "Dates and times minilab"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE, fig.align = 'center')
+```
+
+
+# Dates & Times Lab
+
+This lab will let us practice what we've learned today using a few different approaches. 
+
+**Duration - 1.5 hours** 
+
+
+# MVP
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+
+```{r, echo = FALSE, out.width='50%'}
+knitr::include_graphics("images/tdf_logo.jpeg")
+```
+
+
+## Question 1
+
+Load in the `tour_de_france.csv` dataset and have a look at it. What issues do you see with the dates in this? 
+
+<details>
+<summary>**Answer**</summary>
+
+```{r}
+tour_data <- read_csv("data/tour_de_france.csv")
+
+tour_data
+```
+
+
+Issues:
+- The `start_date` is in character form, and is saved as month-day-year.   
+- The `born` column is also in character form, and is saved as non-abbreviated strings (day month year format).  
+- The `died` column is also in character form, this time as day/month/year. So we have a few different formats.   
+- The time columns are saved as numeric, which we could perhaps convert into hours/minutes to make it more readable further down the line.  
+
+</details>
+<br>
+
+## Question 2
+
+Fix the date columns in the dataset so they are in a date datatype.  
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# fix the date columns in the dataset so they are in date ISO format
+dates_fixed <- tour_data %>%
+  mutate(start_date= mdy(start_date), 
+         born = dmy(born), 
+         died = mdy(died))
+
+dates_fixed
+```
+</details>
+<br>
+
+## Question 3
+
+Now do a data check. Tour de France begins in June or July (usually, COVID was the exception). Create a month column which checks whether or not this is consistent and you only have these months in the start_date options. 
+
+Which month is most popular for starting? 
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# do a data check - tour de france usually begins june or july. Is this consistent?
+dates_fixed %>%
+  mutate(month_check = month(start_date, label = TRUE, abbr = FALSE)) %>%
+  group_by(month_check) %>%
+  summarise(most_popular_month = n()) %>%
+  arrange(desc(most_popular_month))
+```
+Seems to check out that we only have two months in the data. July is the most popular month, only by a small margin. 
+
+</details>
+<br>
+
+## Question 4 
+
+What day of the week is most common for the tour to start?
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# what day of the week is most common for the tour to start?
+dates_fixed %>%
+  mutate(weekday = wday(start_date, label = TRUE)) %>%
+  group_by(weekday) %>%
+  summarise(most_popular_day = n()) %>%
+  arrange(desc(most_popular_day))
+```
+</details>
+<br>
+
+## Question 5
+
+Add a date column to your dataset that captures which date each tour finished? Hint: It lasts 23 days.
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# Add a date column that captures which date each tour finish? It lasts 23 days. 
+dates_fixed <- dates_fixed %>%
+  mutate(end_date = start_date + days(23))
+
+dates_fixed
+```
+</details>
+<br>
+
+
+## Question 6 
+
+What age was each rider when they started the tour? Hint: you'll need to calculate the time period between when the race started, and when they were born. You can then format this (recap the "periods" section in the class notes).
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# what age was each rider when they started the tour? 
+dates_fixed <- 
+  dates_fixed %>%
+  mutate(
+    time_diff = as.period(start_date - born), 
+    age_years = floor(as.numeric(time_diff, "years"))
+  )
+
+dates_fixed 
+```
+</details>
+<br>
+
+***
+
+
+## Question 7
+
+Let's say a plane leaves Sydney Australia at 2.15pm on the 7th August 2018, and arrives at 5.40am on the 8th August 2018 in London. Create these two dates with the appropriate time zones.  
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# 1. create the two dates with appropriate time zones
+takeoff_sydney <- ymd_hms("2018-08-07 14:15:00", tz = "Australia/Sydney")
+land_london <- ymd_hms("2018-08-08 05:40:00", tz = "Europe/London")
+```
+</details>
+<br>
+
+## Question 8
+
+Work out how long the duration between take off and landing is.
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# 2. work out how long the travel time is 
+how_long <- takeoff_sydney - land_london
+
+# show this as a period 
+as.period(how_long)
+```
+</details>
+<br>
+
+## Question 9
+
+Say you left London at 6.20am on the 10th August 2018, and the total flight time including stop-overs was 28 hours and 46 minutes. At what time and date would you arrive in Sydney, Australia?     
+
+
+<details>
+<summary>**Answer**</summary>
+```{r}
+# create your departure date 
+takeoff_london <- ymd_hms("2018-08-10 06:20:00", tz = "Europe/London") 
+
+# add the flight time to the departure date
+land_sydney <- takeoff_london + hours(28) + minutes(46)
+
+# make sure you've got the right time zone set 
+arrive <- with_tz(land_sydney, tzone = "Australia/Sydney")
+arrive
+```
+</details>
+</blockquote>
+<br>
+

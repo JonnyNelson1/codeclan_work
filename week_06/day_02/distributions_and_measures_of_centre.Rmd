@@ -1,0 +1,178 @@
+---
+title: "Untitled"
+author: "Jonny Nelson"
+date: "07/12/2021"
+output: html_document
+---
+```{r}
+# Order is important
+
+library(prob)
+library(tidyverse)
+```
+
+# Distributions: A rigorous definition
+
+## A distribution is a list of all of the possible outcomes of a random variable along with either their corresponding frequency (frequency dist') or probability values (probability dist')
+
+## Less rigorous: distributions tell us how common / how likely various outcomes are.
+
+```{r}
+s_three_coins <- tosscoin(3)
+
+s_three_coins
+```
+
+# Taskles
+
+```{r}
+
+s_three_coin_p <- s_three_coins %>%
+  mutate(label = str_c(toss1, toss2, toss3)) %>%
+  mutate(prob = 1/n())
+
+s_three_coin_p %>%
+  ggplot() +
+  geom_col(aes(x= label, y = prob, colour = "steel blue"))
+
+# uniform distribution: all the bars are the same height, indicating that all probabilites are exactly the same
+
+```
+  
+```{r}
+s_three_coin_p %>%
+  mutate(n_heads = str_count(label, "H")) %>%
+  group_by(n_heads) %>%
+  summarise(prob = sum(prob)) %>%
+  ggplot() +
+  geom_col(aes(x= n_heads, y = prob, colour = "steel blue"))
+```
+## Distibution is no longer uniform, but is still discrete
+
+## General properties of discrete distributions
+
+## y - axis = probability or frequency 
+## x - axis = outcomes
+
+## the integral of the y-axis must always == 1
+
+
+
+# Measures of Centrality 
+
+```{r}
+
+library(janitor)
+library(lubridate)
+
+air_con_sales <- read_csv("1_distributions_measures_of_centre/data/AirConSales.csv") %>%
+  clean_names()
+
+# Wrangle date column
+air_con_sales <- air_con_sales %>%
+  mutate(date = mdy(date))
+
+```
+
+```{r}
+
+# We have measurements for each day, but we want to look at how likely it will be to sell a certain number of units (air conditioners)
+
+# Generate a frequency table
+
+sales_freq_table <- air_con_sales %>%
+  tabyl(units_sold) 
+
+sales_freq_table
+
+```
+
+
+```{r}
+sales_freq_table %>%
+  ggplot() +
+  geom_col(aes(x = units_sold, y = n))
+```
+
+## mean == sum of values/number of all values
+## median == 50% of data beneath, 50% of data above
+## mode == most frequent value
+
+## R does not have a mode function
+
+```{r}
+# Function to get the mode
+
+get_mode <- function(data){
+
+  tabled_data <- table(data)
+  table_names <- names(tabled_data)
+  
+  return(as.numeric(table_names[tabled_data == max(tabled_data) ]))
+  
+}
+```
+
+## Lets calculate these values for out distibution
+
+```{r}
+air_con_sales %>%
+  summarise(mean_daily_sales = mean(units_sold),
+            median_daily_sales = median(units_sold),
+            mode_daily_sales = get_mode(units_sold))
+```
+
+## Extremes inform the means
+
+# Measures of centre and outliers
+
+## If you suspect or observe outliers in your data, be careful which measure of centre you use.
+
+## Bimodal - two peaks
+## Unimodal - one peak
+
+
+## Skewness - assymetry of a distribution
+
+
+## left-skew - left tailed
+
+## the mean < median < mode
+
+
+## right-skew - left tailed
+
+## the mean > median > mode
+
+```{r}
+library(e1071)
+```
+
+```{r}
+left_skewed <- read_csv("1_distributions_measures_of_centre/data/leftskew.csv")
+right_skewed <- read_csv("1_distributions_measures_of_centre/data/rightskew.csv")
+
+left_skewed %>%
+  summarise(skewness = skewness(x, type = 1))
+
+# left-skew ~ -1
+
+right_skewed %>%
+  summarise(skewness = skewness(x, type = 1))
+
+# right_skew ~ 0.7
+
+# Both have a direction and magnitude
+```
+
+# Taskles 
+
+```{r}
+air_con_sales %>%
+  summarise(skewness = skewness(units_sold, type = 1))
+
+# Air Con Sales are heavily right skewed
+```
+
+
+

@@ -1,0 +1,78 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(janitor)
+library(tidyverse)
+library(lubridate)
+library(tsibbledata)
+library(slider)
+library(feasts)
+
+admissions <- read_csv("PHS_admissions_age_and_sex.csv")
+```
+
+# Data Exploration and Cleaning
+
+```{r}
+glimpse(admissions)
+
+unique(admissions_clean$admission_type)
+
+# HSCP is the region
+
+# Need to mutate week turning to a Date
+
+admissions_clean <- admissions %>%
+  clean_names() 
+
+admissions_clean <- admissions_clean %>%
+  mutate(week_ending = ymd(week_ending))
+
+unique(admissions_clean$admission_type)
+```
+
+# Histogram of Admissions
+
+```{r}
+admissions_clean %>%
+  filter(age_group != "All ages") %>%
+  select(week_ending, hscp, age_group, number_admissions, average20182019) %>%
+  mutate(
+    moving_avg = slide_dbl(
+      .x = average20182019, 
+      .f = ~ mean(., na.rm = TRUE),
+      .before = 10,
+      .after = 10
+    )
+  ) %>%
+  ggplot() +
+  geom_col(aes(x = week_ending, y = number_admissions, fill = age_group)) +
+  geom_line(aes(x = week_ending, y = average20182019), colour = "red")
+
+# position = position_stack("Under 5", "5 - 14", "15 - 44", "45 - 64", "65 - 74", "75 - 84", "85 and over")
+```
+
+# Moving Average for 2018/2019
+
+```{r}
+unique(admissions_clean$week_ending)
+
+admissions_clean %>%
+  filter(age_group != "All ages") %>%
+  select(week_ending, hscp, age_group, number_admissions, average20182019) %>%
+  gg_season(average20182019)
+
+# Original Code
+
+admissions_clean %>%
+  filter(age_group != "All ages") %>%
+  select(week_ending, hscp, age_group, number_admissions) %>%
+  ggplot() +
+  aes(x = week_ending, y = number_admissions, fill = age_group) +
+  geom_col()
+
+```
+

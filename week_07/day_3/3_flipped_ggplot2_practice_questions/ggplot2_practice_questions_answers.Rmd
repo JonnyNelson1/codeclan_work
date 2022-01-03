@@ -1,0 +1,112 @@
+---
+title: "R Notebook"
+output: html_notebook
+editor_options: 
+  chunk_output_type: inline
+---
+
+We're going to use data on loans provided by LendingClub to practice `ggplot2`. This dataset contains information about real loans provided through an online lending platform.
+
+First, read the data in.
+
+```{r}
+library(tidyverse)
+
+loans <- read_csv("data/loans.csv")
+```
+
+#
+
+For each of the questions below, create the plot using ggplot and write a sentence about what the plot shows.
+
+1.	Make a scatterplot with loan amount on the x-axis and interest rate, on the y-axis again.
+2.	Add transparency of points to the plot you just created.
+3.	Edit the plot you created to colour the points by the grade of the loan.
+4.	Editing the current plot, use faceting to make a separate plot for each grade.
+
+
+```{r}
+# 1
+ggplot(loans) +
+  aes(x = loan_amnt, y = int_rate) +
+  geom_point()
+
+# This is hard to interpret since there is so many points! We can see that loan amounts
+# tend to cluster in certain areas.
+
+# 2
+ggplot(loans) +
+  aes(x = loan_amnt, y = int_rate) +
+  geom_point(alpha = 0.2)
+
+# With transparency we can see lower loan amounts are more common.
+
+# 3
+ggplot(loans) +
+  aes(x = loan_amnt, y = int_rate, colour = grade) +
+  geom_point(alpha = 0.2)
+
+# The interest rate almost entirely defines the grade of a loan.
+
+# 4
+ggplot(loans) +
+  aes(x = loan_amnt, y = int_rate, colour = grade) +
+  geom_point(alpha = 0.1) +
+  facet_grid(. ~ grade)
+
+# Although this plot makes it clear that there is some overlap. i.e interest rates of 15% may be 
+#  grade C, D, E or even F.
+```
+
+#
+
+Make a barplot where the height of the bars show the mean loan amount for each grade. Colour the bars by the mean interest rate in each grade.
+
+```{r}
+loans %>%
+  group_by(grade) %>%
+  summarise(mean_loan_amnt = mean(loan_amnt),
+            mean_int_rate  = mean(int_rate)) %>%
+ggplot +
+  aes(x = grade, y = mean_loan_amnt, fill = mean_int_rate) +
+  geom_bar(stat = 'identity')
+
+```
+
+#
+
+Explore the data. Try to create one polished graph that summarises how purpose, loan about, interest rate and grade are related. Is there one purpose that is significantly different from the others? How can you show this in your graph?
+
+
+```{r}
+library(RColorBrewer)
+
+summary_table <- 
+loans %>%
+  mutate(purpose = recode(purpose,
+                          `Credit Card` = 'Debt Consolidation',
+                          `Debt Consolidation` = 'Debt Consolidation',
+                          .default = 'Other')) %>%
+  group_by(grade, purpose) %>%
+  summarise(loan_amount = mean(loan_amnt),
+            interest_rate = mean(int_rate),
+            n = n())
+
+
+ggplot(summary_table) +
+  aes(x = interest_rate,
+      y = loan_amount,
+      colour = grade,
+      shape = purpose,
+      size = n) +
+  geom_point() +
+  labs(x = '\nAverage Interest Rate Charged',
+       y = 'Average Loan Value\n',
+       colour = 'Borrower\nGrade',
+       shape = 'Loan\nPurpose',
+       size = 'Number of\nBorrowers',
+       title = 'Borrower grade effects the loan value and interest rate\n')  +
+  theme_minimal() +
+  scale_colour_brewer(type = 'seq', palette = 11)
+```
+

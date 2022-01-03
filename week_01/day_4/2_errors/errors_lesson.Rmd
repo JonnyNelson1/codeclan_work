@@ -1,0 +1,125 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+my_variable_1 <- c(3, 4, 5)
+
+# the_name_of_my_varaible == 4
+
+# Error is a typo
+
+# Correction
+
+my_variable_1 == 4
+```
+
+# CTRL + F - searches all variable of that name and can replace all
+
+```{r}
+library(fcuk)
+```
+
+```{r}
+sl()
+```
+
+```{r}
+1 + 1
+2 + 2
+```
+
+```{r}
+the_name_of_my_variable <- c(3, 4, 5)
+
+filter(the_name_of_my_variable, variable == 4)
+
+# Filter() works on data frames and not a vector
+```
+
+```{r}
+dim(the_name_of_my_variable)
+```
+
+```{r}
+length(the_name_of_my_variable)
+```
+
+```{r}
+class(the_name_of_my_variable)
+```
+
+```{r}
+library(dplyr)
+```
+
+```{r}
+library(MASS)
+```
+
+```{r}
+
+dplyr::select(mtcars, mpg)
+
+# dpylr loaded first and then MASS, therefore it is using the MASS select function
+
+# can prefice this with dplyr::select() to tell RStudio which select() function
+# from which package to use.
+```
+
+```{r}
+conflicts()
+
+# show conflicts in the functions of the packages loaded
+```
+
+
+```{r}
+mtcars
+```
+
+```{r}
+some_characters <- c("Steph", "Del", "Mhairi, "Aileen")
+
+# missing the " # at the end
+```
+
+```{r}
+both_variables <- tibble(the_name_of_my_variable, the_name_of_your_variable,)
+
+# comma at the end 
+```
+
+```{r}
+the_name_of_my_variable <- c(3, 4, 5)
+the_name_of_your_variable <- c(6, 7, 8)
+
+both_variables <- tibble(the_name_of_my_variable, the_name_of_your_variable)
+```
+
+```{r}
+install.packages("errorist")
+```
+
+```{r}
+library(errorist)
+
+the_name_of_my_variable <- c(3, 4, 5)
+the_name_of_your_variable <- c(6, 7, 8)
+
+both_variables <- data.frame(the_name_of_my_variable the_name_of_your_variable)
+```
+
+```{r}
+the_name_of_my_variable <- c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
+subset_variable <- c(1, 3, 6)
+
+
+the_name_of_my_variable %in% subset_variable
+
+# vector recycling
+
+# edited with the "%in%", to see if 1,3,6 is in any of the list per observation
+```
+

@@ -1,0 +1,319 @@
+---
+title: "Lesson 2"
+author: "Jonny Nelson"
+date: "08/12/2021"
+output: html_document
+---
+
+# Confidence Intervals
+
+## Learning Objectives
+
+### What are confidence intervals
+### understand and perform bootstrap resampling
+### use the infer package to do this
+### use infer to calculate confidence intervals
+
+```{r}
+library(e1071)
+library(janitor)
+library(infer)
+library(tidyverse)
+
+telecoms_data <- read_csv("1_sampling_distributions_standard_errors/data/telecomms_churn.csv") %>%
+  clean_names
+```
+
+```{r}
+sample_200 <- telecoms_data %>%
+  rep_sample_n(
+    size = 200, 
+    reps = 1
+  )
+```
+
+```{r}
+# Statistics for the sample of 200
+
+summary_sample_200 <- sample_200 %>%
+  
+  # Currrently grouping by the replicate, need to ungroup()
+  
+  ungroup() %>%
+  summarise(
+    mean_monthly_charges = mean(monthly_charges), 
+    mean_tenure = mean(tenure),
+    prop_churn = mean(churn == "Yes")
+  ) 
+summary_sample_200
+```
+
+```{r}
+
+# statistics for the population
+
+ telecoms_data %>% 
+  ungroup() %>%
+  summarise(
+    mean_monthly_charges = mean(monthly_charges), 
+    mean_tenure = mean(tenure),
+    prop_churn = mean(churn == "Yes")
+  ) 
+```
+
+# Confidence Intervals - a range where we can say that with a degree of confidence the true value exsists
+
+### e.g 95% confidence level
+
+### 31.42 is the mean(tenure) whereas the real value is 32.37
+
+## The Confidence Interval Formula
+
+## = sample mean + / - sample sd / sqrt(sample size)
+
+
+## For 95% confidence level, if we took 100 samples, calculating point estimates (mean(tenure)) and confidence intervals for each, we would expect 95 of the determined confidence intervals to contain the true value of the population parameter. 
+
+# CI is the range of values around a point estimate where we are confident the population value exsists
+
+# CI are proportional to the standard error
+
+## typically larger sample size - narrow confidence intervals
+
+
+
+# Boot-Strapping
+
+## In practice we only have one or a few samples to work with
+
+
+
+```{r}
+de11 <- c("jonny", "louise", "malcolm", "ricardo", "pui")
+
+sample(de11, replace = TRUE)
+```
+
+```{r}
+sample_200 <- read_csv("4_confidence_intervals/data/telecomms_churn_200_sample.csv") %>%
+  clean_names()
+
+head(sample_200)
+```
+
+```{r}
+# Point estimate is mean(tenure)
+
+bootstrap_resample <- sample_200 %>%
+  # resample 5000 times
+  rep_sample_n(size = 200,
+               reps = 5000,
+               replace = TRUE) %>%
+  summarise(
+    mean_tenure = mean(tenure)
+  )
+
+bootstrap_resample
+```
+
+## Taskles
+
+```{r}
+bootstrap_resample %>%
+  ggplot() +
+  aes(x = mean_tenure) +
+  geom_histogram(col = "white", fill = "steel blue") +
+  labs(x = "mean_tenure")
+```
+
+
+```{r}
+standard_error <- bootstrap_resample %>%
+  dplyr::summarise(se_mean_tenure = sd(mean_tenure))
+
+standard_error
+
+# Confidence Interval Formula
+
+mean(bootstrap_resample$mean_tenure) - (sd(bootstrap_resample$mean_tenure)) / sqrt(200)
+```
+
+# se ~ 1/sqrt(sample_size)
+# ci ~ 1/sqrt(sample_size)
+
+# bootstrapping is just computer-based accuracy metric, not creating ficticous data
+
+# Confidence Intervals from Bootstrapping Distribution
+
+```{r}
+CI_95 <- bootstrap_resample %>%
+  
+  summarise(
+    mean = mean(mean_tenure),
+    
+    # 95% Confidence Interval
+    
+    lower_bound = quantile(mean_tenure, probs = 0.025),
+    upper_bound = quantile(mean_tenure, probs = 0.975)
+    
+  )
+
+CI_95
+
+# mean tenure = 32.62
+# 95% confident the true value of the mean is within 29.20 - 36.07
+```
+
+```{r}
+# 99% Confidence Interval
+
+CI_99 <- bootstrap_resample %>%
+  
+  summarise(
+    mean = mean(mean_tenure),
+    
+    # 99% Confidence Interval
+    
+    lower_bound = quantile(mean_tenure, probs = 0.01),
+    upper_bound = quantile(mean_tenure, probs = 0.99)
+    
+  )
+
+CI_99
+
+# mean tenure = 32.62
+# 95% confident the true value of the mean is within 28.62 - 36.65
+```
+
+# Workflow - Specify, Generate, Calculate
+
+```{r}
+# 1. Derive bootstrap distribution
+# 2. Get confidence interval
+# 3. Visualise our CI
+# 4. Get our point estimate
+```
+
+```{r}
+# 1. Derive bootstrap distribution
+
+infer_resample <- sample_200 %>%
+  specify(response = tenure) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+infer_resample
+```
+
+```{r}
+# 2. Derive confidence level
+
+infer_ci_95 <- infer_resample %>%
+  get_ci(level = 0.95, type = "percentile")
+
+infer_ci_95
+```
+
+
+```{r}
+# 3. Visualise Distribution and CI
+
+infer_resample %>%
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = infer_ci_95)
+```
+
+```{r}
+# 4. Get our point estimate
+
+mean_infer <- infer_resample %>%
+  summarise(mean = mean(stat))
+
+mean_infer
+```
+
+```{r}
+sample_300 <- read_csv("4_confidence_intervals/data/telecomms_churn_300_sample.csv") %>%
+  clean_names()
+```
+
+```{r}
+# 1. Derive bootstrap distribution
+
+infer_resample_300 <- sample_300 %>%
+  specify(response = tenure) %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+
+infer_resample_300
+```
+
+```{r}
+# 2. Derive confidence level
+
+infer_ci_95_300 <- infer_resample_300 %>%
+  get_ci(level = 0.95, type = "percentile")
+
+infer_ci_95_300
+```
+
+
+```{r}
+# 3. Visualise Distribution and CI
+
+infer_resample_300 %>%
+  visualise(bins = 30) +
+  shade_confidence_interval(endpoints = infer_ci_95_300)
+```
+
+```{r}
+# 4. Get our point estimate
+
+mean_infer_300 <- infer_resample %>%
+  summarise(mean = mean(stat))
+
+mean_infer_300
+```
+
+# CI for a proportion
+
+```{r}
+sample_200 %>%
+  distinct(churn)
+```
+
+```{r}
+bootstrap_resample_churn <- sample_200 %>%
+  specify(response = churn, success = "Yes") %>%
+  generate(reps = 5000, type = "bootstrap") %>%
+  calculate(stat = "prop") 
+
+bootstrap_resample_churn
+```
+
+```{r}
+# Get the CI boundaries
+
+churn_ci_95 <- bootstrap_resample_churn %>%
+  get_ci(level = 0.95, type = "percentile")
+
+churn_ci_95
+```
+
+```{r}
+# Visualise 
+
+bootstrap_resample_churn %>%
+  visualise(bins = 30) +
+  shade_ci(endpoints = churn_ci_95)
+```
+
+```{r}
+mean_200_churn <- bootstrap_resample_churn %>%
+  summarise(point_estimate = mean(stat))
+
+mean_200_churn
+
+# Number of customers that do churn is 0.254 with a 95% confidence, that the true proportion is between 0.195 - 0.315
+```
+

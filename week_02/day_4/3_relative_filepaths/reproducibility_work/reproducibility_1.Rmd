@@ -1,0 +1,77 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+
+student <- c("Abigail", "Bjorn", "Caitlin", "Dave", "Elly", "Francis")
+question_1 <- c(10, 3, 1, 5, 5, 8)
+question_2 <- c(2, 5, 5, 4, 5, 6)
+question_3 <- c(4, 5, 9, 7, 6, 8)
+exam_results <- data.frame(student, question_1, question_2, question_3)
+
+```
+
+```{r}
+exam_results[, 1]
+
+# Not that reproducible, as if the order of columns change, it will pull out a different column
+
+exam_result <- exam_results %>%
+  select(question_2, student)
+
+exam_results[, "student"]
+
+# This example will always pick out the column labelled "student"
+```
+
+
+```{r}
+source("subset_function.R")
+```
+
+```{r}
+
+vector <- c(2,3,4,5,6,7,8,9)
+
+subset_function(vector)
+
+# The new function is selecting the first 5 values
+```
+
+# Assume the reader has no prior knowledge of the project.
+
+```{r}
+library(lubridate)
+```
+
+# Restart and Run All Chunks tab <- check whether your data is in a different tab.
+
+# Can source in different files to the Notebook e.g.
+
+```{r}
+source("subset_function.R")
+
+# Only an examply
+```
+
+#
+
+```{r}
+
+# numbers2 <- c(1,2,3)
+# 
+# saveRDS(numbers2, file = "number.RDS")
+
+numbers2 <- readRDS(file = "number.RDS")
+```
+
+```{r}
+
+```
+

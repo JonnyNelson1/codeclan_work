@@ -1,0 +1,44 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+```
+
+```{r}
+
+read_csv("")
+
+# (~) can then read from all files
+
+# But this is not good for reproducibility, it uses the absolute file path.
+
+```
+
+```{r}
+
+getwd()
+
+# Gives you were the working directory is.
+
+```
+
+```{r}
+library(here)
+
+# test where the top level of the project directory is
+
+here::here()
+
+# Use this to set the path to the data file
+
+read_csv(here("../3_relative_filepaths/no_project_example/data/students.csv/"))
+
+# "../" to move one out of the current file we are working within
+
+# here() function allows you to make the code more reproducible
+
+```
+

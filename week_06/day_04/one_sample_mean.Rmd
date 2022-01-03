@@ -1,0 +1,94 @@
+---
+title: "lesson_01"
+author: "Jonny Nelson"
+date: "09/12/2021"
+output: html_document
+---
+
+```{r}
+library(janitor)
+library(prob)
+library(tidyverse)
+library(infer)
+```
+
+```{r}
+books_data <- read_csv("1_one_sample_tests_mean/data/books.csv") %>%
+  clean_names()
+```
+
+```{r}
+books_clean <- books_data %>%
+  dplyr::filter(!is.na(average_rating)) %>%
+  rename(num_pages = number_num_pages)
+
+glimpse(books_clean)
+```
+
+```{r}
+books_clean %>%
+  ggplot(aes(x = average_rating)) +
+  geom_histogram(col = "white")
+```
+
+```{r}
+books_clean %>%
+  ggplot(aes(x = average_rating)) +
+  geom_boxplot()
+
+# We see the left skew quite alot better with a box plot
+```
+
+```{r}
+observed_stat <- books_clean %>%
+  summarise(mean_rating = mean(average_rating))
+
+observed_stat
+```
+
+# Null Sampling Distribution
+
+```{r}
+null_distribution <- books_clean %>%
+  specify(response = average_rating) %>%
+  hypothesise(null = "point", mu = 3.93) %>%
+  
+  # "mu" is the population mean
+  
+  generate(reps = 10000, type = "bootstrap") %>%
+  calculate(stat = "mean")
+```
+
+# Visualising the Bootstrap Test
+
+```{r}
+# Distribution of the average ratings over 10,000 reps
+
+null_distribution %>%
+  visualise(bins = 30) +
+  xlab("mean average rating")
+```
+
+```{r}
+observed_stat
+```
+
+# Is the mean_rating for the population within 95% CI
+
+```{r}
+null_distribution %>%
+  visualise(bins = 40) +
+  shade_p_value(obs_stat = observed_stat$mean_rating,
+                direction = "both")
+```
+
+# Set the p-value
+
+```{r}
+p_value <- null_distribution %>%
+  get_p_value(obs_stat = observed_stat$mean_rating,
+              direction = "both")
+
+p_value
+```
+

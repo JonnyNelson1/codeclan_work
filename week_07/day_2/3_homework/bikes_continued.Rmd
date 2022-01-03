@@ -1,0 +1,86 @@
+---
+title: "Communicating Data - part 2"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    number_sections: true
+    df_print: paged
+    css: ../../../styles.css
+  pdf_document: default
+---
+<br>
+
+<div class="emphasis">
+
+**This assignment is part of the PDA.** Please refer to any extra PDA-specific materials provided either in your classnotes or on Canvas before completing it to make sure you're meeting all expected learning outcomes.
+
+</div>
+
+<br>
+
+Tonight's homework will be to add further visualisations to the report you started yesterday. You should also spend tonight's homework time refining the report by writing descriptions and interpretations of your visualisations (if you haven't already), as well as making the report 'presentable' i.e. making code chunks hide-able and making sure it follows a logical narrative. You will get to present your report to an instructor on Thursday. Please time your presentation beforehand to make sure it is **no more than 10 minutes**.
+
+# Further business questions
+
+Using what you have learned today, we would also like you to answer the following questions in the report:
+
+* What is the geographical spread of the start points of bike hires?
+* **Optional**: Can you predict bike use over the next couple of months? _(This is based on the flipped time series forecasting lesson)_
+* Any other insights?
+
+# Task hints
+
+* For the spatial plot, you probably want to use `leaflet` as it makes it easy to plot longitudes and latitudes. Make sure to filter the data first (take a sample) as otherwise R may crash because of the sheer volume of points.
+
+_If you're trying to do a forecast_ :
+
+* When building a forecast model, think about downsampling your data, i.e. summarising counts by either date or month.
+* You can use `tsibble::fill_gaps()` to fill in missing values with e.g. the median.
+* It would be good to plot your forecast and to include a non-technical comment on accuracy
+
+
+# Presentation tips
+* Consider what insights your report can offer and highlight these
+* Make your conclusions/main points clear both visually and verbally
+* Try to have your report follow the same logical narrative that you want to present, so that you can scroll through it as you present rather than jump back and forth between sections.
+* Make sure the report is structured using meaningful headings and subheadings.
+
+# PDA Requirements
+
+<br>
+
+**The visualisations must collectively satisfy the following criteria:**
+
+1. The visualisations must illustrate relationships and patterns in the data. All the plots you have been taught to make will will do this. For example: a histogram will illustrate the pattern in how a variable is distributed and a scatter graph will illustrate the relationship between two variables.
+
+2. The visualisations must be well designed and aesthetically pleasing. This is somewhat subjective, but please keep your plots tidy with titles and labels and stick to a consistent colour scheme.
+
+3. The visualisations must have high information content. A graph that illustrates a single number does not have a high information content. Your graphs should be useful for helping people understand important parts of the data.
+
+4. The visualisations must provide accurate insights into the dataset. Be careful not to provide misleading graphs. For example, do not use a smoothed line with no data points, if the smoothed line does not accuratly represent the data.
+
+5. The visualisations must adhere to graphical conventions. You might want to look back at our lessons on best practices for graphs. 
+
+6. The visualisations must include geospatial and time series visualisations.
+
+<br>
+
+**The presentation must satisfy the following criteria.**
+
+1. The presentation must be appropriate for a non-technical audience. Make you you do not use technical terms without explaining them. Imagine that your audience is intelligent, but has never studied any statistics.
+
+2. The presentation must tell a story in data that addresses specific business questions. Focus your presentation on answering a question, or a series of questions. Try not to include information outside of this, even if it is interesting. Your audience should be able to leave with one or two key ideas clear in their mind. 
+3. The presentation must minimise complexity. You only have a short amount of time to get your point across. Try to stick to clear, unambiguous conclusions.  
+
+4. The presentation must have high information content. One or two numbers will not be enough. But balance this information content against being overly complex. 
+
+5. The presentation must identify key performance indicators. What do you think are the most important metrics in this data set? Make sure you discuss them in your presentation.
+
+6. The presentation must provide insights into the dataset. It is very important that you use the dataset provided and draw your information from there. 
+
+7. The presentation must provide data-driven conclusions or recommendations. Take your insights and try to form them into conclusions and recommendations. But make sure those conclusions come from the data, and not from your own speculating. 
+
+8. The presentation must demonstrate that data ethics has been considered. Think about what you learnt on the data ethics day: do any of those ideas apply in this situation.
+
+<br>

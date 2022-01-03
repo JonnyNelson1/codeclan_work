@@ -1,0 +1,19 @@
+---
+title: "Colours and Themes"
+author: "Jonny Nelson"
+date: "30/11/2021"
+output: html_document
+---
+
+```{r}
+pets <- read_csv("data/pets.csv")
+
+ggplot(pets) + 
+  aes(weight, age) +
+  geom_point(colour = "#3333cc")
+```
+
+```{r}
+
+```
+
