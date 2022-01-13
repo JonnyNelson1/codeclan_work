@@ -1,0 +1,195 @@
+---
+title: "Data Exploration"
+author: "Jonny Nelson"
+date: "12/01/2022"
+output: html_document
+---
+
+# Task 
+
+## gain better understanding of the incidence of cancer in NHS Borders
+## help inform the planning for provision of cancer treatment <br>
+
+# Plan
+
+## * Load in relevant data sets from PHS
+## * Filter for NHS Borders using geographical key
+## * Better understand what is going on which incidences of cancer - explore the driving factors
+
+# Load in Libraries
+
+```{r}
+library(janitor)
+library(tidyverse)
+library(lubridate)
+library(cowplot)
+```
+
+# Load in the data sets
+
+```{r}
+incidence_regions <- read_csv("raw_data/incidence_by_health_board.csv")
+
+incidence
+
+head(incidence_regions)
+
+glimpse(incidence_regions)
+
+unique(incidence_regions$HB)
+# NHS Borders -  . . . 16
+
+unique(incidence_regions$CancerSiteICD10Code)
+
+unique(incidence_regions$CancerSite)
+
+unique(incidence_regions$SexQF)
+
+incidence_regions %>%
+  select(CancerSiteICD10Code, CancerSite) %>%
+  filter(CancerSiteICD10Code == "C44")
+
+# Therefore C44 - Non-melanoma skin cancer no included in all cancers
+# Why?
+
+unique(incidence_regions$WASRLower95pcConfidenceIntervalQF)
+# NA and z, z meaning that the number is not statistically significant 
+
+incidence_regions %>%
+  filter(WASRLower95pcConfidenceIntervalQF == "z")
+
+# Where z is found there is no confidence intervals
+
+# appears to be true for rates that are very low
+
+# same for europe and world data
+```
+
+# HB - Health Board
+# CancerSiteIDC10 - diagnosed cancer site
+# CancerSite - Type of cancer (aggregated data here watch out)
+# Sex - aggreated All then split to male and female (filter out all)
+# SexQF - d = derived from other data (can filter SexQF == d as this removes aggregated by sex data)
+# Year - Year of diagnosis - mutate to year(year)
+# IncidencesAllAges - Total number of new cancer registrations
+
+# Crude rate - per 100,000 
+# Crude rate Upper and Lower - CI intervals 
+
+# EASR - European age-standardised (2013 ES Population) per 100,000
+
+# WASR - World age-standardised incidence per 100,000
+
+# SIR - Standardised incidence ratio 
+
+
+# Initial Cleaning 
+
+```{r}
+incidence_clean <- incidence_regions %>%
+  clean_names() %>%
+    mutate(health_board_name = case_when(
+    hb == "S92000003" ~ "Scotland",
+    hb == "S08000015" ~ "Ayrshire and Arran",
+    hb == "S08000016" ~ "Borders",
+    hb == "S08000017" ~ "Dumfries and Galloway",
+    hb == "S08000019" ~ "Forth Valley",
+    hb == "S08000020" ~ "Grampian",
+    hb == "S08000022" ~ "Highland",
+    hb == "S08000024" ~ "Lothian",
+    hb == "S08000025" ~ "Orkney",
+    hb == "S08000026" ~ "Shetland",
+    hb == "S08000028" ~ "Western Isles",
+    hb == "S08000029" ~ "Fife",
+    hb == "S08000030" ~ "Tayside",
+    hb == "S08000031" ~ "Greater Glasgow and Clyde",
+    hb == "S08000032" ~ "Lanarkshire",
+    TRUE ~ as.character(NA)))
+
+write_csv(incidence_clean, "clean_data/incidence_clean")
+```
+
+# Initial Data Exploration:
+
+## Major Groupings of Cancer Type
+
+```{r}
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All" & cancer_site == "All cancer types") %>%
+  ggplot() +
+  aes(x = year, y = crude_rate) +
+  geom_point() +
+  geom_line() +
+  geom_ribbon(aes(ymin = crude_rate_lower95pc_confidence_interval,
+                  ymax = crude_rate_upper95pc_confidence_interval),
+              linetype = 2,
+              alpha = 0.1,
+              colour = "red",
+              fill = "red")
+  
+
+# Find cancer types and health board name
+
+# unique(incidence_clean$cancer_site)
+
+# unique(incidence_clean$health_board_name)
+
+# Junk Code
+
+# incidence_clean %>%
+#   filter(cancer_site == c("All cancer types", "Bladder", "Bone and articular cartilage", "Bone and connective tissue", "Connective tissue", "Malignant brain cancer", "Malig brain ca (incl pit. gland, cranio. duct, pineal gland)", "Non-malig brain ca (incl pit.gland,cranio.duct,pineal gland)", "All brain and CNS tumours (malignant and non-malignant)") &
+#          health_board_name == "Borders") %>%
+#   arrange(cancer_site)
+```
+
+# Which Types of Cancer are driving this trend from 550 -> 800?
+
+```{r}
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All" & cancer_site != "All cancer types") %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free") 
+
+  plot_grid(plotlist = [10:15], nrow = 3, ncol = 3)
+
+# Cannot discern anything from this data so needs to be broken down to a greater degree
+  
+```
+
+# What cancers had the highest change between 1995 and 2020?
+
+```{r}
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>%
+  group_by(cancer_site) %>%
+  summarise(percent_change_in_incidences = (incidences_all_ages/lag(incidences_all_ages, n = 24) - 1) *100,
+            absolute_change_in_incidences = diff(incidences_all_ages, lag = 24) ) %>%
+  arrange(desc(percent_change_in_incidences)) %>%
+  head(21)
+
+# diff(incidences_all_ages, lag = 24) 
+
+# Take a look at percent_change_in_incidences == "lnf"
+
+# * All brain and CNS = 0 -> absolute value
+# * Non-malignant brain cancer = 0 -> 10  
+# * Salivary glands = 0 -> 2 - still rare
+
+# incidence_clean %>%
+#   filter(health_board_name == "Borders") %>%
+#   filter(sex == "All") %>%
+#   filter(cancer_site == "Salivary glands")
+  
+```
+
+```{r}
+
+```
+
