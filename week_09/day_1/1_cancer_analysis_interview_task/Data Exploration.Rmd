@@ -30,7 +30,10 @@ library(cowplot)
 ```{r}
 incidence_regions <- read_csv("raw_data/incidence_by_health_board.csv")
 
-incidence
+incidence_scotland <- read_csv("raw_data/incidence_at_scotland_level.csv")
+
+clean_scotland <- incidence_scotland %>%
+  clean_names()
 
 head(incidence_regions)
 
@@ -86,6 +89,10 @@ incidence_regions %>%
 # Initial Cleaning 
 
 ```{r}
+# Initial cleaning of the data set to mutate in a new variable to show the health boards by name and the clean the names of the variables into the tidy data format.
+
+# Written this clean data into a separate folder and recalled at a later stage
+
 incidence_clean <- incidence_regions %>%
   clean_names() %>%
     mutate(health_board_name = case_when(
@@ -114,6 +121,9 @@ write_csv(incidence_clean, "clean_data/incidence_clean")
 ## Major Groupings of Cancer Type
 
 ```{r}
+# Firstly wanted to take a look at just the Borders in a time series idenifying the trend in the crude rate of cancer per 100,000.
+
+# As we can see the trend clearly indicates an increase over time for All cancer types from 1995 to 2019
 
 incidence_clean %>%
   filter(health_board_name == "Borders") %>%
@@ -147,6 +157,10 @@ incidence_clean %>%
 # Which Types of Cancer are driving this trend from 550 -> 800?
 
 ```{r}
+# Next I wanted to identify the main drivers in this overall trend increase to get a better understanding of which specific types of cancer were driving the steady increase
+
+# Plotting this out on a using the facet wrap gave too many graphs to be able to discern any trends. So I had to look about things in another way. Afterwards i figured out the solution was to make the plot into a function and then pass the function through plot_grid where you can select the plots shown.
+
 incidence_clean %>%
   filter(health_board_name == "Borders") %>%
   filter(sex == "All" & cancer_site != "All cancer types") %>%
@@ -156,7 +170,7 @@ incidence_clean %>%
   theme(legend.position = "none") +
   facet_wrap(~ cancer_site, scales = "free") 
 
-  plot_grid(plotlist = [10:15], nrow = 3, ncol = 3)
+  # plot_grid(plotlist = [10:15], nrow = 3, ncol = 3)
 
 # Cannot discern anything from this data so needs to be broken down to a greater degree
   
@@ -164,7 +178,9 @@ incidence_clean %>%
 
 # What cancers had the highest change between 1995 and 2020?
 
-```{r}
+```{r, message = FALSE}
+# I was able to calculate the absolute change and percentage change between 1995 and 2019, by using a summarise function. I then arranged the data by percent change and chose the top 20 values in terms of percent change to take a look at closer.
+
 incidence_clean %>%
   filter(health_board_name == "Borders") %>%
   filter(sex == "All") %>%
@@ -189,7 +205,172 @@ incidence_clean %>%
   
 ```
 
+# Choosing out facets to take a look at (1,2)
+
+```{r}
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("All brain and CNS tumours (malignant and non-malignant)", "Non-malig brain ca (incl pit.gland,cranio.duct,pineal gland)")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free") 
+```
+
+# Top 3,4
+
 ```{r}
 
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Salivary glands", "Carcinoma in situ of the breast")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free") 
+
 ```
+
+# 5,6
+
+```{r}
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Tongue", "Connective tissue")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free") 
+```
+# 7,8
+
+```{r}
+# "Liver and intrahepatic bile ducts"
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Thyroid", "Liver and intrahepatic bile ducts")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free")
+
+# Liver is trending up
+```
+# 9,10
+
+```{r}
+# "Multiple myeloma and malignant plasma cell neoplasms", "Oropharyngeal cancers"
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Multiple myeloma and malignant plasma cell neoplasms", "Oropharyngeal cancers")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free")
+```
+
+# 11,12
+
+```{r}
+# Kidney
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Kidney", "Bone and connective tissue")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free")
+```
+
+# 13,14
+
+```{r}
+# Basal cell carcinoma of the skin
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Chronic lymphocytic leukaemia", "Basal cell carcinoma of the skin")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free")
+```
+
+# 15,16
+
+```{r}
+# "Non-melanoma skin cancer", "Pancreas"
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Non-melanoma skin cancer", "Pancreas")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free")
+```
+
+# 17,18
+
+```{r}
+# Lip, oral cavity and pharynx
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Breast", "Lip, oral cavity and pharynx")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free")
+```
+
+# 19, 20
+
+```{r}
+# Squamous cell carcinoma of the skin
+
+incidence_clean %>%
+  filter(health_board_name == "Borders") %>%
+  filter(sex == "All") %>% 
+  filter(cancer_site == c("Squamous cell carcinoma of the skin", "Acute lymphoblastic leukaemia")) %>%
+  ggplot() +
+  aes(x = year, y = incidences_all_ages, fill = cancer_site) +
+  geom_col() +
+  theme(legend.position = "none") +
+  facet_wrap(~ cancer_site, scales = "free")
+```
+
+# From all 20 graphs I was able to pick out 9 cancer sites which showed consistent trend increases in incidences in the Borders. Moving forward, it would be preferable to do a linear regression to obtain the gradient, which would inform the expected rate increase that NHS Borders could expect year on year - for each group of cancer
+
+# This could be very helpful to supply chain teams within hospitals who need to provision the treatments for these types of cancer.
+
+# It would also inform hospital management and specialists on how they would be able to manage say, increased chemotherapy, for these expected patients.
+
+# This could inform NHS Borders public health policy and messaging. There may be increased cancer awareness and early detection targeting these cancer types - informed by specialists and consultants - with what to look out for.
+
+# Future - could use the age range statistics to inform what ages and sexs need targeting for messaging
+
+
+# Breakdowns of Borders vs. Scotland vs. Europe
 
