@@ -83,14 +83,19 @@ tibble_states %>%
 
 tibble_states %>%
   summarise(cor = cor(income, murder))
-
-pairs()
 ```
 
 ```{r}
+library(GGally)
 library(psych)
 
 psych::pairs.panels(state.x77)
+
+ggscatmat(state.x77)
+
+ggpairs(tibble_states)
+
+# Different ways for visualising the variables and their correlation coefficients
 ```
 
 # Statistics
@@ -161,5 +166,97 @@ noisy_line_plot +
 ```{r}
 noisy_line_plot +
   geom_smooth(method = "lm")
+```
+
+## Lets do a regression
+
+```{r}
+sample <- tibble(
+  height = c(176, 164, 181, 168, 195, 185, 166, 180, 188, 174),
+  weight = c(82, 65, 85, 76, 90, 92, 68, 83, 94, 74 )
+)
+
+sample %>%
+  ggplot(aes(weight, height)) +
+  geom_point()
+
+line
+
+line <- function(x, b0, b1) {
+  b0 + x * b1
+}
+
+sample <- sample %>%
+  mutate(fit_height = line(weight, b0 = 95, b1 = 1))
+
+sample %>%
+  ggplot(aes(x = weight, y = height)) +
+  geom_point(aes(weight, height)) +
+  geom_point(aes(weight, fit_height), shape = 1) +
+  geom_abline(slope = 1, intercept = 95, colour = "red") +
+  geom_segment(aes(xend = weight, yend = fit_height))
+
+# global options -> graphics -> backend = Cairo PNG 
+
+# _*This Gives a Smooth Line*_
+```
+
+```{r}
+sample <- sample %>%
+  mutate(residuals = height - fit_height)
+
+sample %>%
+  summarise(sum_residuals = sum((residuals)))
+
+sample <- sample %>%
+  mutate(sq_residuals = residuals^2)
+
+sample %>%
+  summarise(sum_of_squares_res = sum(sq_residuals),
+            standard_error = sqrt(sum_of_squares_res))
+```
+
+## create first linear model
+
+```{r}
+class(~weight)
+
+# Modelling height as a function of weight
+
+new_model <- lm(height ~ weight, sample)
+
+# Predicting using our linear model
+
+predict(new_model)
+
+predict_at <- data.frame(weight = 78)
+
+predict(new_model, newdata = predict_at)
+```
+
+```{r}
+library(modelr)
+
+sample <- sample %>%
+  # select(-fit_height, -residuals, -sq_residuals) %>%
+  add_predictions(new_model) %>%
+  add_residuals(new_model)
+
+sample %>%
+  ggplot(aes(x = weight)) +
+  geom_point(aes(y = height)) +
+  geom_line(aes(y = pred), colour = "red")
+  
+```
+
+```{r}
+# Can see predictions for weights from 50:120
+
+weights_predict <- tibble(
+  weight = 50:120
+)
+
+weights_predict %>%
+  add_predictions(new_model)
 ```
 
