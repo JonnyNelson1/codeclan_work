@@ -351,6 +351,8 @@ model_dist_2 <- lm(y ~ x, dist_2)
 autoplot(model_dist_1)
 autoplot(model_dist_2)
 
+plot(model_dist_2)
+
 # adding predicitons and residuals to the data set
 
 dist_1 <- dist_1 %>%
@@ -405,4 +407,6 @@ bootstrap_dist_slope %>%
 ```{r}
 clean_names(tidy(model_dist_2, conf.int = TRUE, conf.level = .95))
 ```
+
+
 
