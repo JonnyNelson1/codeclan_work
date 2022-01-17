@@ -1,0 +1,165 @@
+---
+title: "Correlation"
+author: "Jonny Nelson"
+date: "17/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(janitor)
+library(tidyverse)
+```
+
+```{r}
+noisy_bivariate <- function(noise = 1, gradient = 1){
+  x <- runif(n = 200, min = 0, max = 10)
+  y <- gradient * x + 10
+  y_scatter <- noise * 4 * rnorm(n = 200)
+  y <- y + y_scatter
+  data = tibble(x, y)
+
+  r <- round(cor(x, y), 4)
+  title <- paste(
+    "noise = ", noise,
+    ", gradient = ", gradient,
+    ", r = ", r
+  )
+  
+  data %>%
+    ggplot(aes(x = x, y = y)) +
+    geom_point() +
+    xlim(0, 10) +
+    ylim(min(c(min(y), 0)), max(c(max(y), 10))) +
+    ggtitle(title)
+  
+}
+
+noisy_bivariate(noise = 2, gradient = 3)
+
+# Change noise and gradient values to change the "r" value
+```
+
+## correlation calculation in R
+
+```{r}
+mtcars %>%
+  summarise(cor = cor(mpg, wt))
+
+# Correlation between mpg and weight in mtcars data set
+
+cor(mtcars$mpg, mtcars$wt)
+
+# Does not matter on the way around they are in the correlation calculation 
+```
+
+## Anscombe shows us data needs to be visualised as correlation is a blunt tool
+
+```{r}
+anscombe
+
+cor(anscombe$x1, anscombe$y1)
+
+cor(anscombe$x2, anscombe$y2)
+
+cor(anscombe$x3, anscombe$y3)
+
+cor(anscombe$x4, anscombe$y4)
+```
+
+## Task
+
+```{r}
+state.x77
+
+tibble_states <- clean_names(as_tibble(state.x77))
+
+tibble_states
+
+tibble_states %>%
+    ggplot(aes(x = income, y = murder)) +
+    geom_point()
+
+tibble_states %>%
+  summarise(cor = cor(income, murder))
+
+pairs()
+```
+
+```{r}
+library(psych)
+
+psych::pairs.panels(state.x77)
+```
+
+# Statistics
+
+```{r}
+# y vs x
+# independant variable vs dependant variable
+
+y = ax + b
+y = mx + b 
+```
+
+```{r}
+line <- function(x,a,b) {
+  a * x + b
+}
+
+data <- tibble(x = seq(-5, 5, 0.1),
+               y = line(x, a = 0, b = 7))
+
+data %>%
+  ggplot(aes(x, y)) +
+  geom_line(col = "red") +
+  geom_vline(xintercept = 0) +
+  geom_hline(yintercept = 0)
+
+
+```
+
+```{r}
+noisy_line <- read_csv("data/noisy_line.csv")
+
+centroid <- noisy_line %>%
+  summarise(x = mean(x),
+            y = mean(y))
+
+centroid
+
+noisy_line_plot <- noisy_line %>%
+  ggplot(aes(x, y)) +
+  geom_point() +
+  geom_point(x = centroid$x, y = centroid$y, colour = "red", size = 5)
+
+noisy_line_plot
+```
+
+```{r}
+centroid <- noisy_line %>%
+  summarise(x = mean(x),
+            y = mean(y))
+
+get_intercept <- function(slope, centroid_x, centroid_y) {
+  centroid_y - slope * centroid_x
+}
+
+slope <- centroid$y / centroid$x
+
+slope
+
+noisy_line_plot +
+  geom_abline(slope = slope, 
+              intercept = get_intercept(slope = slope,
+                                        centroid$x,
+                                        centroid$y))
+
+```
+
+```{r}
+noisy_line_plot +
+  geom_smooth(method = "lm")
+```
+
