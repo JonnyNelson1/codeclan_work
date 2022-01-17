@@ -311,6 +311,98 @@ cov(sample$weight, sample$height) /
 var(sample$weight)
 ```
 
+```{r}
+hist(resid(model))
+
+histogram <- resid(lm(Petal.Length ~ Sepal.Length, iris[-(1:50),]))
 
 
+
+```
+
+## Diagnostics
+
+```{r}
+# Helps identify for any abnormalities in the residuals
+
+library(ggfortify)
+autoplot(model)
+
+# separate all the plots out
+
+plot(model)
+
+# getAnywhere() to find where a function comes from
+```
+
+## Task 2
+
+```{r}
+dist_1 <- read_csv("data/distribution_1.csv")
+dist_2 <- read_csv("data/distribution_2.csv")
+
+# Creating linear models for the data sets
+
+model_dist_1 <- lm(y ~ x, dist_1)
+model_dist_2 <- lm(y ~ x, dist_2)
+
+# Plotting the model diagnostics and taking a look
+
+autoplot(model_dist_1)
+autoplot(model_dist_2)
+
+# adding predicitons and residuals to the data set
+
+dist_1 <- dist_1 %>%
+  add_predictions(model_dist_1) %>%
+  add_residuals(model_dist_1)
+
+dist_2 <- dist_2 %>%
+  add_predictions(model_dist_2) %>%
+  add_residuals(model_dist_2)
+
+# Visualing data to take a look at the anaomalies 
+
+dist_1 %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(aes(x = x, y = pred), colour = "red")
+
+# suggests its polynomial relationship
+
+dist_2 %>%
+  ggplot(aes(x = x, y = y)) +
+  geom_point() +
+  geom_line(aes(x = x, y = pred), colour = "red")
+
+# heteroskedastic - values shotgun along the x axis
+```
+
+## Bootstrapping regression
+
+```{r}
+library(infer)
+
+bootstrap_dist_slope <- dist_2 %>%
+  specify(formula = y ~ x) %>%
+  generate(reps = 10000, type = "bootstrap") %>%
+  calculate(stat = "slope")
+
+bootstrap_dist_slope
+
+slope_ci95 <- bootstrap_dist_slope %>%
+  get_ci(level = .95, type = "percentile")
+
+slope_ci95
+
+bootstrap_dist_slope %>%
+  visualise(bins = 30) +
+  shade_ci(endpoints = slope_ci95)
+
+
+```
+
+```{r}
+clean_names(tidy(model_dist_2, conf.int = TRUE, conf.level = .95))
+```
 
