@@ -258,5 +258,59 @@ weights_predict <- tibble(
 
 weights_predict %>%
   add_predictions(new_model)
+
+# Predicting outside the range of data as it may not remain as a linear regression
 ```
+
+## Regression Diagnostics
+
+```{r}
+sample <- select(sample, height, weight)
+
+model <- lm(height ~ weight, sample)
+
+summary(model)
+
+model %>%
+  ggplot() +
+  geom_boxplot(aes(x = weight, y = height))
+```
+
+```{r}
+library(broom)
+
+summary(model)
+
+# Take the summary and put into a data frame
+
+tidy_output <- clean_names(tidy(model))
+
+glance_output <- clean_names(glance(model))
+```
+
+__r2__ the proportion of the variation that can be _explained_ by variation in the predictor var'.
+
+H0: No effect
+HA: Positive effect for weight
+
+
+## Calculating m manually 
+
+```{r}
+x_dev <- sample$weight - mean(sample$weight)
+y_dev <- sample$height - mean(sample$height)
+
+top <- sum(x_dev * y_dev) / 9
+bottom <- sum(x_dev^2 / 9)
+
+model
+
+top / bottom
+
+cov(sample$weight, sample$height) /
+var(sample$weight)
+```
+
+
+
 
