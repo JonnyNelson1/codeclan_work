@@ -1,0 +1,22 @@
+---
+title: "diamonds_model"
+author: "Jonny Nelson"
+date: "18/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(janitor)
+library(tidyverse)
+library(fastDummies)
+library(ggfortify)
+library(GGally)
+library(mosaic)
+
+read_csv("data/grades.csv")
+```
+

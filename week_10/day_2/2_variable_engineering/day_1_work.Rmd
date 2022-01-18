@@ -1,0 +1,289 @@
+---
+title: "day_2_work"
+author: "Jonny Nelson"
+date: "18/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(janitor)
+library(tidyverse)
+library(fastDummies)
+
+grades <- read_csv("data/grades.csv")
+
+head(grades)
+```
+
+# Check for Missing values
+
+## Cannot have missing values in these models!!!
+
+```{r}
+summary(grades)
+
+# look at the bottom
+
+# Leave them, impute them.
+
+grades_imputed <- grades %>%
+  group_by(subject) %>%
+  mutate(across(where(is.numeric), ~ coalesce(.x, mean(.x, na.rm = TRUE))))
+```
+
+# Check for Outliers
+
+## Most of these models can't deal with groups
+
+## Nominal and Ordinal (Ordinal has an order)
+
+```{r}
+head(grades_imputed)
+
+# need to make our own dummy variables
+
+# therefore turn groups in dummy variables (1,2,3,,4,5,6 . . .)
+
+# But here we  don't have a particular order
+```
+
+```{r}
+grades_imputed %>%
+  distinct(subject)
+```
+
+```{r}
+grades_subject_dummy <- grades_imputed %>%
+  mutate(subject_engl = ifelse(subject == "english", 1, 0))
+
+head(grades_subject_dummy)
+
+# makes grouped variables into binary
+```
+
+```{r}
+grades_subject_dummy <- grades_imputed %>%
+  mutate(subject_phys = ifelse(subject == "physics", 1, 0)) %>%
+  mutate(subject_maths = ifelse(subject == "maths", 1, 0)) %>%
+  mutate(subject_fren = ifelse(subject == "french", 1, 0)) %>%
+  mutate(subject_bio = ifelse(subject == "biology", 1, 0))
+
+head(grades_subject_dummy)
+
+# Making variables the model can take in and weight accordingly 
+
+grades_subject_dummy %>%
+  select(contains("subject"))
+
+grades_subject_dummy <- grades_subject_dummy %>%
+  ungroup() %>%
+  select(-subject)
+
+grades_subject_dummy
+```
+
+## We fallen into the dummy variable trap!
+
+## We've made a load of variables
+
+## We need to remove one variable - still have the same information
+
+```{r}
+grades_subject_dummy2 <- grades %>%
+  fastDummies::dummy_cols(
+    select_columns = "subject",
+    remove_first_dummy = TRUE,
+    remove_selected_columns = TRUE) 
+
+head(grades_subject_dummy2)
+
+# Same thing as above with if_else statements
+```
+
+```{r}
+assignment_mean <- mean(grades$assignment)
+assignment_sd   <- sd(grades$assignment)
+
+grades_scaled <- grades %>%
+  mutate(assignment_scale = (assignment - assignment_mean) / assignment_sd)
+
+grades_scaled
+
+#  We get scaled assignments
+```
+
+```{r}
+grades %>% 
+  ggplot(aes(x = assignment)) +
+  geom_density() +
+  geom_vline(xintercept = mean(grades$assignment), size = 1, colour = "red") +
+  labs(title = "Raw data")
+```
+
+```{r}
+grades_scaled %>% 
+  ggplot(aes(x = assignment_scale)) +
+  geom_density() +
+  geom_vline(xintercept = mean(grades_scaled$assignment_scale), size = 1, colour = "red") +
+  labs(title = "Raw data")
+```
+
+## Changing the data put not the pattern in the data!
+
+
+
+
+# Multiple Regressions
+
+```{r}
+library(mosaicData)
+
+head(RailTrail)
+```
+
+```{r}
+railtrail_clean <- RailTrail %>%
+  clean_names() %>%
+  mutate(across(spring:fall, as.logical))
+  
+head(railtrail_clean)
+```
+
+```{r}
+railtrail_trim <- railtrail_clean %>%
+  select(-c(hightemp, lowtemp, day_type, fall))
+
+head(railtrail_trim)
+```
+
+```{r}
+alias(lm(volume ~ ., data = railtrail_clean))
+```
+
+```{r}
+library(GGally) 
+ggpairs(railtrail_trim)
+```
+
+```{r}
+library(ggfortify)
+
+model <- lm(volume ~ avgtemp, data = railtrail_trim)
+
+autoplot(model)
+```
+
+```{r}
+summary(model)
+
+# Taskles
+
+# Multiple R-Squared - 0.1822 - avgtemp only accounts for 18% in the variance
+# Residual Error - 115.9 - How many users "off" in predictions
+```
+
+## Lets look at another variable
+
+```{r}
+model_2 <- lm(volume ~ avgtemp + weekday, data = railtrail_trim)
+
+# + weekday adds a predictor
+
+summary(model_2)
+autoplot(model_2)
+
+# Approx 70 fewer users on the trail each weekeday as compared with the weekend, as weekdayFALSE is the reference 
+
+# With average temperature held constant
+```
+
+```{r}
+library(mosaic)
+plotModel(model_2)
+```
+
+# Taskles
+
+```{r}
+model_3 <- lm(volume ~ avgtemp + weekday + summer, data = railtrail_trim)
+
+# + summer adds another predictor
+
+summary(model_3)
+
+autoplot(model_3)
+
+plotModel(model_3)
+
+# summerTRUE has a p-value of 0.15 so is not statistically signif'
+
+# Multiple-R-Squared has not increased greatly
+
+
+```
+
+
+```{r}
+railtrail_trim %>%
+  ggplot(aes(x = avgtemp, y = volume, color = weekday)) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+
+# Just plotting the data
+```
+
+```{r}
+model_4 <- lm(volume ~ avgtemp + weekday + avgtemp:weekday,
+              data = railtrail_trim)
+
+plotModel(model_4)
+
+summary(model_4)
+```
+
+```{r}
+model_5 <- lm(volume ~ avgtemp + weekday + cloudcover, data = railtrail_trim)
+
+summary(model_5)
+
+# weekday volume is 48 users less than weekends, stat sig' - if avgtemp and cloudcover constant
+
+# 1 unit increase in cloudcover predicts a decrease of 16 users where every other variable is held constant
+
+# A 1 degree farenheit increase in avgtemp predicts a 5 user increase, with all other variables held constant 
+```
+
+```{r}
+model_6 <- lm(volume ~ avgtemp + weekday + cloudcover +precip, data = railtrail_trim)
+
+summary(model_6)
+```
+
+#### For every 1 inch increase in precipitation the linear modeal predicts a decrease in volume of 117 users while all other variables are held constant. 
+
+#### statistically significant - p-value below 0.05
+
+#### Residual error has decreased by 5 users
+
+#### Multiple R squared has increased by about 5%
+
+
+
+# Interactions of continuous predictors/variables
+
+
+```{r}
+final_model <- lm(volume ~ avgtemp + cloudcover + weekday + precip, 
+              data = railtrail_trim)
+
+summary(final_model)
+```
+
+```{r}
+
+```
+
