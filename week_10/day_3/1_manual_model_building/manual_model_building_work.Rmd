@@ -1,0 +1,246 @@
+---
+title: "Manual Model Building"
+author: "Jonny Nelson"
+date: "19/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Explanatory Model - Check stat' is signif' and continue adding vars
+
+Predictive Model - black box models, very hard to explain
+
+"All models are wrong but some are useful"
+
+"History doesn't repeat but it often rhymes"
+
+```{r}
+library(car)
+library(tidyverse)
+library(modelr)
+library(GGally)
+
+Prestige
+```
+```{r}
+prestige_trim <- Prestige %>%
+  select(-census) %>%
+  drop_na()
+
+summary(prestige_trim)
+
+# We have 4 NA's in variable type
+
+# Go back up and drop NA's
+```
+
+# Add 1st predictor
+
+```{r, message = FALSE}
+prestige_trim %>%
+  ggpairs(aes(colour = type))
+```
+
+## Education, Income and Type
+
+```{r}
+model_1 <- lm(prestige ~ education, data = prestige_trim)
+
+summary(model_1)
+
+# prestige = 5.4*education - 10.84
+```
+
+```{r}
+par(mfrow = c(2,2))
+plot(model_1)
+```
+
+## Task
+
+```{r}
+model_2 <- lm(prestige ~ type, data = prestige_trim)
+
+summary(model_2)
+
+plot(model_2)
+
+# Model 1 is better - multiple r squared is higher and residual standard error lower
+
+library(ggfortify)
+```
+
+## Add residuals of the model
+
+```{r}
+prestige_remain_resig <- prestige_trim %>%
+  add_residuals(model_1) %>%
+  select(-c(prestige, education))
+
+prestige_remain_resig %>%
+  ggpairs(aes(colour = type))
+```
+
+```{r}
+model_3 <- lm(prestige ~ education + income, data = prestige_trim)
+
+summary(model_3)
+```
+
+```{r}
+model_4 <- lm(prestige ~ education + type, data = prestige_trim)
+
+summary(model_4)
+```
+
+## p value of typeprof is not significant and typewc is
+
+## We need to find out if type as a whole is stat' sig'
+
+## Need to do an anova()
+
+```{r}
+anova(model_1, model_4)
+
+# from p value - does make a sig' diff' 
+
+# Way to check if the predictor can be added or not based on the collective p-value
+```
+
+```{r}
+prestige_remain_resig_2 <- prestige_trim %>%
+  add_residuals(model_3) %>%
+  select(-c(prestige, education, income))
+
+prestige_remain_resig_2 %>%
+  ggpairs(aes(colour = type))
+```
+```{r}
+model_5 <- lm(prestige ~ education + income +type, data = prestige_trim)
+
+summary(model_5)
+
+# multiple-r-squared has increased - model explains prestige better
+
+# residual standard error - gone down - model more accurate
+
+# but type is not significant - but need to know if all together are as we cannot see typebc
+
+anova(model_3,model_5)
+
+# anova tells us that type including blue collar worker is statistically significant - p value 
+
+
+```
+
+```{r}
+prestige_remain_resig_3 <- prestige_trim %>%
+  add_residuals(model_5) %>%
+  select(-prestige)
+
+# Lets look income:education
+```
+
+## Lets see how they interact
+
+```{r}
+coplot(resid ~ income | education,
+       panel = function(x,y, ...){
+         points(x,y)
+         abline(lm(y ~ x), col = "blue")
+       },
+       data = prestige_remain_resig_3,
+       columns = 6)
+```
+
+## Good interaction to look at. Change in trend incidates an interaction between income and education 
+
+```{r}
+prestige_remain_resig_3 %>%
+  ggplot() +
+  aes(x = education, y = resid, colour = type) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+
+```{r}
+prestige_remain_resig_3 %>%
+  ggplot() +
+  aes(x = income, y = resid, colour = type) +
+  geom_point() +
+  geom_smooth(method = "lm", se = FALSE)
+```
+# Task
+
+```{r}
+model_7 <- lm(prestige ~ education + income + type + type:income, data = prestige_trim)
+
+summary(model_7)
+```
+
+```{r}
+anova(model_5, model_7)
+
+# It is statistically significant - means blue collar is very significant
+
+# We can include this in our model
+
+# Wouldn't go much further as we risk over fitting our data 
+```
+
+```{r}
+library(relaimpo)
+
+# relative importance analysis 
+
+# We use "lmg" which means Lindemann, Merenda and Gold method
+
+# Assigns importance by averaging contributions from each predictor
+
+calc.relimp(model_7, type = "lmg", rela = TRUE)
+```
+
+## rela = TRUE gives an importance relative to the model not the multiple r squared
+
+## type is the most important predictor in the model, then education, then income, then the interaction is only 5%
+
+```{r}
+library(lm.beta)
+
+# Another method
+
+model_7_beta <- lm.beta(model_7)
+
+summary(model_7_beta)
+```
+
+# Principle Component Analysis
+
+```{r}
+mtcars
+
+cars_numeric <- mtcars %>%
+  dplyr::select(-c(vs, am))
+```
+
+```{r}
+cars_pca <- prcomp(cars_numeric,
+                   centre = TRUE,
+                   scale. = TRUE) 
+
+summary(cars_pca)
+
+# PC1 explains most of the variance, PC2 much less and so on
+```
+
+## Visualsing the proportions of the components
+
+```{r}
+library(factoextra)
+
+fviz_eig(cars_pca)
+```
+
