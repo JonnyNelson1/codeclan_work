@@ -1,0 +1,207 @@
+---
+title: "day_02_lab"
+author: "Jonny Nelson"
+date: "25/01/2022"
+output: html_document
+---
+
+## 1. Reading in Packages and Data
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(janitor)
+library(leaps)
+library(tidyverse)
+library(GGally)
+library(readxl)
+
+# Reading in the data
+telecoms <- read_xlsx("data/telecomms_churn.xlsx") %>%
+  clean_names() %>%
+  mutate(across(where(is.numeric), ~ coalesce(.x, mean(.x, na.rm = TRUE))))
+
+head(telecoms)
+
+summary(telecoms_clean)
+
+# transform NAs in total charges - see above
+```
+
+## 2. Data Exploration
+
+```{r}
+# ggpairs doesn't work not quite yet. Need to make <chr> variables into logical
+
+telecoms_clean <- telecoms %>%
+  select(-customer_id) %>%
+  mutate_if(is.character, as.factor) %>%
+  mutate(senior_citizen = if_else(senior_citizen == 1, TRUE, FALSE))
+
+telecoms_clean
+
+ggpairs(telecoms_clean %>%
+          select(churn, 1:3))
+
+ggpairs(telecoms_clean %>%
+          select(churn, 4:7))
+
+ggpairs(telecoms_clean %>%
+          select(churn, 8:10))
+
+# mutate(across(where(is.numeric), ~ coalesce(.x, mean(.x, na.rm = TRUE))))
+
+# Senior citizens appear to have a very low churn
+
+# Contract has a high correlation as well
+
+# Gender has a correlation as well
+
+```
+
+## Backwards Selection
+
+```{r}
+
+# Automated model building is fine in this situation. Be careful about using this method, as some new variables are just not relevant like Contract2Year.
+
+library(leaps)
+
+regsubsets_backward <- regsubsets(churn ~ ., data = telecoms_clean, nvmax = 12, method = "backward")
+
+plot(regsubsets_backward, scale = "bic")
+
+# Make sure to do the summary. Make sure you can explain things very well
+```
+
+
+
+
+
+
+## Making 3 Single Predictor Models
+
+
+### 1st Predictor: Tenure
+
+#### Geom Jitter Plot
+
+```{r}
+score_plot <- ggplot(telecoms_clean) +
+  geom_jitter(aes(x = tenure, y = as.integer(churn)), shape = 1, 
+              position = position_jitter(h = 0.05)) + 
+  xlab("Churn Status") + scale_x_continuous(breaks=seq(0, 1,1))
+
+score_plot
+```
+
+#### Tenure Predictor Model
+
+```{r}
+telecoms_1st_model <- glm(churn ~ tenure,
+                          family = binomial(link = "logit"),
+                          data = telecoms_clean)
+
+summary(telecoms_1st_model)
+
+# Model is statistically significant, p <<< 0.05
+```
+
+#### Plotting Model Predictions
+
+```{r}
+library(modelr)
+
+# range(telecoms$tenure)
+
+predict_log <- tibble(tenure = seq(0, 72, 1)) %>%
+  add_predictions(telecoms_1st_model, type = "response")
+
+ggplot(telecoms_clean) +
+  geom_jitter(aes(x = tenure, y = if_else(churn == "Yes", 1, 0)), shape = 1, position = position_jitter(h = 0.15)) +
+  geom_line(data = predict_log, aes(x = tenure, y = pred), colour = "red")
+```
+
+### 2nd Predictor: Employed
+
+```{r}
+telecoms_2nd_predictor <- glm(churn ~ contract,
+                              family = binomial(link = "logit"),
+                              data = telecoms_clean)
+
+summary(telecoms_2nd_predictor)
+
+# All statistically significant 
+```
+
+#### Add Predictions onto the model
+
+```{r}
+telecoms_clean_2nd_pred <- telecoms_clean %>%
+  add_predictions(telecoms_2nd_predictor, type = "response")
+
+telecoms_clean_2nd_pred
+```
+#### Adding in the threshold to make into logical
+
+```{r}
+threshold <- 0.4
+
+telecoms_clean_2nd_pred_threshold <- telecoms_clean_2nd_pred %>%
+  mutate(pred_threshold_0.6 = pred > threshold) 
+
+telecoms_clean_2nd_pred_threshold
+```
+
+### 3rd Predictor: Employed
+
+# Scoring the Model
+
+```{r}
+conf_table <- telecoms_clean_2nd_pred_threshold %>%
+  mutate(churn = if_else(churn == "Yes", TRUE, FALSE)) %>%
+  tabyl(churn, pred_threshold_0.6)
+
+conf_table
+
+# Accuracy Score
+
+(2954 + 1655) / (2954 + 1655 + 2220 + 214) * 100
+
+# 65 % accurate
+
+
+# ROC
+
+library(pROC)
+
+# ROC Object 
+
+roc_obj_1pred <- telecoms_clean_2nd_pred_threshold %>%
+  mutate(churn = if_else(churn == "Yes", TRUE, FALSE)) %>%
+  roc(response = churn,
+      predictor = pred)
+
+# ROC Plot
+
+ggroc(data = roc_obj_1pred,
+      legacy.axes = TRUE) +
+  coord_fixed() +
+  ylab("Sensitivity (TRP)") +
+  xlab("1 - Specificity (FPR)")
+
+# AUC 
+
+auc(roc_obj_1pred)
+
+# AUC == 0.7391
+
+
+# Gini Coefficient
+
+2 * 0.7391 - 1
+
+
+
+```
+

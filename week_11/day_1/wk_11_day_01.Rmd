@@ -1,0 +1,402 @@
+---
+title: "wk_11_day_01"
+author: "Jonny Nelson"
+date: "24/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(janitor)
+library(leaps)
+library(tidyverse)
+library(GGally)
+```
+
+# Logistic Regression
+
+binary dependent variables:
+
+- spam emails or not
+- married or not
+- clicked or not
+- cat or dog
+- organic and convential
+- accepted or not (mortgages)
+
+```{r}
+mortgage_data <- read_csv("1_logistic_regression_theory/data/mortgage_applications.csv") %>%
+  clean_names()
+
+head(mortgage_data)
+
+# tu_score - trans-union score - credit score (0 - 710)
+```
+
+```{r}
+ggpairs(mortgage_data)
+```
+
+```{r}
+# Let's reduce the symbol size and 'jitter' the y-values so we can see more of the data without overlap of symbols
+# geom_jitter() adds adds a small amount of random variation (vertically and/ore horizontally depending on the arguments) to the location of each point
+
+score_plot <- ggplot(mortgage_data) +
+  geom_jitter(aes(x = tu_score, y = as.integer(accepted)), shape = 1, 
+              position = position_jitter(h = 0.05)) + 
+  xlab("Accepted Status") + scale_x_continuous(breaks=seq(0, 1,1))
+
+score_plot
+```
+
+cannot plot this as a linear regression
+
+```{r}
+mortgage_data %>%
+  filter(tu_score == 594)
+
+# 3/5 chance of the mortgage being accepted
+```
+# Logistic Function
+
+#### Logsitic Regression is estimating the log odds of an event, rather than the probability. 
+
+Odds(success) = 1/6 / 1 - 1/6 = 1/5 = 0.2
+
+```{r}
+logit <- function(x){
+  return(log(x/(1-x)))
+}
+
+logit_data <- tibble(p = seq(0.001, 0.999, 0.001)) %>%
+  mutate(logit_p = logit(p))
+
+head(logit_data)
+```
+
+```{r}
+ggplot(logit_data, aes(y = p, x = logit_p)) + 
+  geom_line() + 
+  ylab("probability") + xlab("logit(p) value")
+```
+# Build model that predicts the probability of a loan being accepted or not, given a tu_score
+
+## 1. Build the logistic model
+
+```{r}
+mortgage_data_log_model <- glm(accepted ~ tu_score,
+                               family = binomial(link = "logit"),
+                               data = mortgage_data)
+
+summary(mortgage_data_log_model)
+```
+
+## 2. Add predicitons into your dataset
+
+```{r}
+library(modelr)
+
+predict_log <- tibble(tu_score = seq(0, 710, 1)) %>%
+  add_predictions(mortgage_data_log_model, type = "response")
+
+ggplot(mortgage_data) +
+  geom_jitter(aes(x = tu_score, y = as.integer(accepted)), shape = 1, position = position_jitter(h = 0.03)) +
+  geom_line(data = predict_log, aes(x = tu_score, y = pred), colour = "red")
+```
+
+## Use and amend the code above to predict the probability of getting a mortgage application accepted with a tu_score of 594.
+
+```{r}
+tibble(tu_score = 594) %>%
+  add_predictions(mortgage_data_log_model, type = "response")
+```
+
+## 4. Interpretating B1 for a continuous predictor (tu_score)
+
+If the independent variable increases by one unit, then the estimate of the log odds of success changes (increases or decreases) by b1 units
+
+Calculate the odds of having an accepted application at tu_score = 594
+
+```{r}
+odds_at_594 <- tibble(tu_score = 594) %>%
+  add_predictions(mortgage_data_log_model, type = "response") %>%
+  mutate(odds = pred / (1 - pred))
+
+odds_at_594
+```
+
+This implies that a 1 unit increase in tu_score increases the odds of getting approved for a loan by a factor of 1.58
+
+How do these odds change if we increase the tu_score by 50 points?
+
+```{r}
+library(broom)
+
+b_tu_score <- tidy(mortgage_data_log_model) %>%
+  filter(term == "tu_score") %>%
+  select(estimate)
+
+b_tu_score
+```
+
+```{r}
+odds_factor <- exp(b_tu_score * 50)
+odds_factor
+```
+
+Calculate the new odds of getting or not a 50 point increase in tu_score
+
+```{r}
+odds_at_594 <- odds_at_594 %>% select(odds)
+odds_at_594
+```
+
+
+```{r}
+new_odds <- odds_factor * odds_at_594
+new_odds
+```
+
+# Mortgage Multiple predictors model
+
+```{r}
+mortgage_multi_log_model <- glm(accepted ~ tu_score + employed + age,
+                               family = binomial(link = "logit"),
+                               data = mortgage_data)
+
+mortgage_multi_log_model
+```
+
+```{r}
+tidy_out <- tidy(mortgage_multi_log_model)
+```
+
+Final model: accepted ~ tu_score, employed
+
+```{r}
+b_employed_true <- tidy(mortgage_multi_log_model) %>%
+  filter(term == "employedTRUE") %>%
+  select(estimate)
+
+exp(b_employed_true)
+```
+
+On average, a customers odds of being accepted for a mortgage are 4.39 times higher if they are employed. 
+
+
+# Evaluate the performance of a model
+
+
+```{r}
+mortgage_3pred_model <- glm(accepted ~ tu_score + employed + age,
+                            data = mortgage_data,
+                            family = binomial(link = 'logit'))
+
+mortgage_data_with_3pred <- mortgage_data %>%
+  add_predictions(mortgage_3pred_model, type = "response")
+
+head(mortgage_data_with_3pred)
+```
+
+* Binary values but we have output numeric values
+
+## _Threshold probability_ : above or below - TRUE or FALSE - depends on certain probability level
+
+Set the threshold of 0.6
+
+```{r}
+threshold <- 0.6
+
+mortgage_data_with_3pred <- mortgage_data_with_3pred %>%
+  mutate(pred_threshold_0.6 = pred > threshold) 
+
+mortgage_data_with_3pred
+```
+
+Count how many times our classifier/model is correct
+
+```{r}
+conf_table <- mortgage_data_with_3pred %>%
+  tabyl(accepted, pred_threshold_0.6)
+
+conf_table
+```
+
+```{r}
+mortgage_data_with_3pred %>%
+  filter(tu_score == 594)
+```
+
+# Accuracy Score
+
+What is the accuracy of a classifier
+
+No.of True Positive and No of True Negatives over the Total Number
+
+```{r}
+(179 + 679) / 1000 * 100
+```
+# Rates
+
+Performance measures of the classifier/model:
+
+
+True Positive Rate: NTP / NTP + NFN
+
+TPR: the number of positive cases that are correctly identified/classified **sensitivity** of a classifier.
+
+True Negative Rate: NTN / NTN + NFP
+
+TNR: the number of negative cases that are correctly identified/classified. **Specificity** of a classifer. 
+
+
+False Positive Rate: NFP / NFP + NTN 
+
+FPR: False alarm rate. negative cases that are incorrectly identified as positive. **Type I Error**
+
+False Negative Rate: NFN / NFN + NTP
+
+FNR: incorrectly identifies a case as negative when it's positive **Type II Error**
+
+```{r}
+NTP <- 179
+NTN <- 679
+NFP <- 49
+NFN <- 93
+
+TPR <- NTP / (NTP + NFN)
+TNR <- NTN / (NTN + NFP)
+
+FPR <- NFP / (NFP + NTN)
+FNR <- NFN / (NFN + NTP)
+
+TPR
+TNR
+FPR
+FNR
+```
+
+# ROC Curves, AUC values, Gini coefficients and cross validation:
+
+```{r}
+summary(mortgage_3pred_model)
+```
+
+## ROC Curves
+
+```{r}
+library(pROC)
+
+roc_obj_3pred <- mortgage_data_with_3pred %>%
+  roc(response = accepted,
+      predictor = pred)
+```
+
+```{r}
+ggroc(data = roc_obj_3pred,
+      legacy.axes = TRUE) +
+  coord_fixed() +
+  ylab("Sensitivity (TRP)") +
+  xlab("1 - Specificity (FPR)")
+```
+
+```{r}
+classifier_data <- tibble(
+  threshold = roc_obj_3pred$thresholds,
+  sensitivity = roc_obj_3pred$sensitivities,
+  specificity = roc_obj_3pred$specificities
+)
+
+head(classifier_data)
+```
+
+# Taskles
+
+```{r}
+mortgage_1pred_model <- glm(accepted ~ tu_score,
+                            data = mortgage_data,
+                            family = binomial(link = 'logit'))
+
+mortgage_data_with_1pred <- mortgage_data %>%
+  add_predictions(mortgage_1pred_model, type = "response")
+```
+
+```{r}
+roc_obj_1pred <- mortgage_data_with_1pred %>%
+  roc(response = accepted,
+      predictor = pred)
+```
+
+```{r}
+ggroc(data = list(pred1 = roc_obj_1pred, pred3 = roc_obj_3pred),
+      legacy.axes = TRUE) +
+  coord_fixed() +
+  ylab("Sensitivity (TRP)") +
+  xlab("1 - Specificity (FPR)") 
+```
+
+Second model is better as it is closer to the top LHS of the plot than the 1 predictor
+
+ROC gives us an easy way to compare performance visually 
+
+## AUC values - Singular Number for Performance 
+
+AUC: Area Under the Curve
+
+```{r}
+auc(roc_obj_3pred)
+auc(roc_obj_1pred)
+```
+
+## Gini Coefficient: normalises AUC so that a total random classifier has 0 and a perfect classifier has 1
+
+GINI = 2 * AUC - 1
+
+0:1
+
+```{r}
+gini1 <- 2 * 0.86 - 1
+gini3 <- 2 * 0.881 - 1
+
+gini1
+gini3
+
+# with gini coefficients, bigger is better
+```
+
+## Cross Validation 
+
+```{r}
+library(caret)
+
+mortgage_data <- mortgage_data %>%
+  mutate(employed = as_factor(if_else(employed, "t", "f")),
+         accepted = as_factor(if_else(accepted, "t", "f")),
+         employed = relevel(employed, ref = "f"),
+         accepted = relevel(accepted, ref = "f")) 
+
+# caret is fussy about categorical variables 
+```
+
+```{r}
+train_control <- trainControl(method = "repeatedcv",
+                              number = 5, 
+                              repeats = 100, 
+                              savePredictions = TRUE, 
+                              classProbs = TRUE, 
+                              summaryFunction = twoClassSummary)
+
+
+model <- train(accepted ~ tu_score + employed + age, 
+               data = mortgage_data, 
+               trControl = train_control, 
+               method = "glm", 
+               family = binomial(link = "logit"))
+
+summary(model)
+
+model$results
+```
+
+

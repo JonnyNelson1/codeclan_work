@@ -1,0 +1,365 @@
+---
+title: "day_4_work"
+author: "Jonny Nelson"
+date: "20/01/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Work flow for manual model building 
+
+* Exploratory Data Analysis
+
+* Feature Engineering
+
+* Feature Selection
+
+* Model Development 
+
+## Manual Tools
+
+* ggpairs coplots
+* p-values
+* anova residual plots
+* R^2
+
+## Automatic Tools
+
+* AIC
+* BIC
+* (K-Fold)
+
+```{r}
+library(CodeClanData)
+library(janitor)
+library(tidyverse)
+
+savings
+```
+
+```{r}
+model_overfit <- lm(savings ~ ., data = savings)
+model_wellfit <- lm(savings ~ salary + age + retired, data = savings)
+model_underfit <- lm(savings ~ salary, data = savings)
+
+summary(model_overfit)
+summary(model_wellfit)
+summary(model_underfit)
+```
+
+## Parsimonious Measure of Goodness of Fit
+
+*A parsimonious model is one that includes as few variables as necessary
+
+*Adjusted R Squared - measures the proportion of the variation in your response variable
+
+*Akaike information Criterion (AIC) - Single number score used to determine which of the model is most likely the best model
+
+*Bayes Information Criterion (BIC) - Measure of goodness of fit 
+
+## BIC and AIC comparison
+
+*R-squared - largers values are always better 
+
+*AIC and BIC - lower numbers are always better
+
+*BIC tends to be more parsimonious - tends to select smaller models - penalises larger models when compared to AIC
+
+```{r}
+summary(model_overfit)
+
+summary(model_overfit)$adj.r.squared
+```
+
+```{r}
+AIC(model_overfit)
+```
+
+```{r}
+BIC(model_overfit)
+```
+
+```{r}
+a <- broom::glance(model_overfit)
+
+b <- broom::glance(model_underfit)
+
+c <- broom::glance(model_wellfit)
+
+models_summary_comparison <- bind_rows(c,a,b)
+
+# if difference between R-squared and adjusted r squared is large - means it is over fitting
+
+# AIC and BIC is lowest for the wellfit model
+```
+
+## Test and training set
+
+* We do this after feature selection and model development
+
+```{r}
+set.seed(9)
+
+# set seed to 9 - sets random number generator to one number
+
+n_data <- nrow(savings)
+
+# Count rows
+
+test_index <- sample(1:n_data, size = n_data*0.2)
+
+# Making a test index with 20% of the data
+
+test <- slice(savings, test_index)
+train <- slice(savings, -test_index)
+```
+
+```{r}
+model <- lm(savings ~ salary + age + retired,
+            data = train)
+
+# Training the model with 80%
+
+library(modelr)
+
+# Predicting with the model the other 20%
+
+predictions_test <- test %>%
+  add_predictions(model) %>%
+  select(savings, pred)
+
+predictions_test
+```
+
+```{r}
+# calculate mean squared error
+
+mse_test <- mean((predictions_test$pred - predictions_test$savings)^2)
+
+# Predicting the 20%
+
+mse_test
+```
+```{r}
+predictions_train <- train %>%
+  add_predictions(model) %>%
+  select(savings, pred)
+
+predictions_test
+
+mse_test_02 <- mean((predictions_train$pred - predictions_train$savings)^2)
+
+mse_test_02
+
+# mean squared error is smaller than the test
+```
+
+## K-Fold Validation 
+
+* goes through 5 different 20% chunks of the data and then cycles through each fold once. So 5 model training
+
+* Essentially testing a model 5 times
+
+```{r}
+library(caret)
+
+# Set options for Cross-Validation
+```
+
+```{r}
+# set options for cv
+cv_10_fold <- trainControl(method = "cv",
+                           number = 10,
+                           savePredictions = TRUE)
+
+model <- train(savings ~ salary + age + retired,
+               data = savings,
+               trControl = cv_10_fold,
+               method = "lm")
+```
+
+```{r}
+model$pred
+```
+```{r}
+model$resample
+```
+
+```{r}
+mean(model$resample$RMSE)
+```
+
+```{r}
+mean(model$resample$Rsquared)
+```
+
+```{r}
+# Using all predictors instead of wellfitted model
+
+cv_10_fold <- trainControl(method = "cv",
+                           number = 10,
+                           savePredictions = T)
+
+model <- train(savings ~ .,
+               data = savings,
+               trControl = cv_10_fold,
+               method = "lm")
+
+mean(model$resample$RMSE)
+mean(model$resample$Rsquared)
+
+# Root mean square errors have increased - so not as good with overfit model
+```
+
+well fit model RMSE - 9663.584
+                R^2 - 0.340
+
+over fit model RMSE - 9789.31
+                R^2 - 0.321
+
+```{r}
+library(leaps)
+
+insurance
+```
+# forward selection
+
+```{r}
+# function we use to do forward selection
+regsubsets_forward <- regsubsets(charges ~ .,
+                                 
+# outcome of charges in relation to all columns
+                                 data = insurance,
+                                 nvmax = 8, 
+
+# no. of max predictors
+                                 method = "forward")
+# forward selection
+
+sum_regsubsets_forward <- summary(regsubsets_forward)
+sum_regsubsets_forward
+```
+
+* #### The rows indicate which variables should be selected first for our model.
+
+```{r}
+sum_regsubsets_forward$which[4,]
+```
+
+```{r}
+plot(regsubsets_forward, scale = "adjr2")
+```
+
+```{r}
+plot(regsubsets_forward, scale = "bic")
+```
+
+```{r}
+null_model = lm(charges ~ 1,
+                data = insurance)
+
+wellfit_model = lm(charges ~ age + bmi + children + smoker,
+                   data = insurance)
+
+overfit_model = lm(charges ~ ., 
+                   data = insurance)
+
+BIC(null_model) - BIC(wellfit_model)
+BIC(null_model) - BIC(overfit_model)
+```
+
+```{r}
+plot(sum_regsubsets_forward$rsq, type = "b")
+# diminishing returns after about 3 variables 
+```
+
+```{r}
+plot(sum_regsubsets_forward$bic, type = "c")
+# type indicates the type of graph = l - line
+
+# Go for the minimum value in the BIC. BIC penalizes overly complicated plots
+```
+# Backward selection
+
+```{r}
+# function we use to do forward selection
+regsubsets_multi <- regsubsets(charges ~ .,
+                                 
+# outcome of charges in relation to all columns
+                                 data = insurance,
+                                 nvmax = 8, 
+
+# no. of max predictors
+                                 method = "backward")
+# forward selection
+
+sum_regsubsets_multi <- summary(regsubsets_multi)
+sum_regsubsets_multi
+```
+
+```{r}
+plot(sum_regsubsets_multi$rsq, type = "b")
+plot(sum_regsubsets_multi$bic, type = "b")
+```
+
+## regsubset does not check the p-values
+
+```{r}
+summary(regsubsets_multi)$which[6,]
+```
+
+```{r}
+mod_without_region <- lm(charges ~ age + bmi + children + smoker,
+                         data = insurance)
+
+summary(mod_without_region)
+
+mod_with_region <- lm(charges ~ age + bmi + children + smoker +region,
+                         data = insurance)
+
+summary(mod_with_region)
+```
+
+```{r}
+# Need to use anova to be sure
+
+anova(mod_with_region, mod_without_region)
+```
+
+```{r}
+# Run diagnostic plots
+par(mfrow = c(2,2))
+plot(mod_without_region)
+
+# Models show hetroskidastic data - not ideal
+```
+# Extract a 3 predictor model
+
+```{r}
+mod_without_children <- lm(charges ~ smoker + age + bmi,
+                         data = insurance)
+
+summary(mod_without_children)
+
+mod_with_children <- lm(charges ~ smoker + age + bmi + children,
+                         data = insurance)
+
+summary(mod_with_children)
+```
+
+```{r}
+# Need to use anova to be sure
+anova(mod_with_children, mod_without_children)
+```
+
+```{r}
+# Run diagnostic plots
+par(mfrow = c(2,2))
+plot(mod_without_children)
+
+# Bit hetroskedastic so nae ideal
+```
+
