@@ -139,10 +139,214 @@ avocado_without_index %>%
 # Nice little SQL query there
 ```
 
-
+# SQL Query
 
 ```{r}
 library(DBI)
 dbGetQuery(conn = sc, statement = "SELECT COUNT(*) FROM avocado")
+```
+
+# Another example of the SQL query
+
+```{r}
+avocado_without_index <-  avocado_without_index %>%
+  mutate(high_average = average_price > 1.40) %>%
+  show_query()
+```
+
+# Proof that the above query worked
+
+```{r}
+avocado_without_index %>%
+  select(high_average) %>%
+  glimpse()
+```
+
+# Task 1
+
+```{r}
+result <- avocado_without_index %>%
+  group_by(region) %>%
+  summarise(mean_price = mean(average_price)) %>%
+  show_query()
+
+class(result)
+# still a tbl_spark object
+
+summary_table <- result %>%
+collect()
+
+class(summary_table)
+```
+
+# sparklyr helper functions and RStudio
+
+```{r}
+# Open a web tab to look at Spark requests
+spark_web(sc)
+```
+
+```{r}
+# Viewing the Spark logs
+spark_log(sc, filter = "sparklyr")
+```
+
+# Examples of simple analysis operations
+
+# Plotting
+
+```{r}
+avocado_spark %>%
+  ggplot(aes(x = type)) +
+  geom_bar()
+
+# Had to bring the whole data set into R to do this!!!!!
+```
+
+# Better way to visualise with R is do make Spark do the heavy lifting
+
+```{r}
+avocado_spark %>%
+  count(type) %>%
+  collect() %>%
+  ggplot(aes(x = type, y = n)) +
+  geom_col()
+
+# Way faster
+
+# We are essentially doing the count in Spark, importing that summarised data and then visualising in R
+```
+
+# Simple Modelling
+
+```{r}
+fit <- avocado_spark %>% 
+  ml_linear_regression(average_price ~ total_volume)
+
+class(fit)
+
+# by using the ml_linear_regression() function we are putting the computation onto Spark, instead of using lm()
+```
+
+# Looking at the model
+
+```{r}
+library(modelr)
+tidy(fit)
+
+glance(fit)
+```
+
+# Taking a look at the fitted values
+
+```{r}
+library(broom)
+augment(fit)
+```
+
+# More complex interplay of sparklyr and tidyverse
+
+```{r}
+fit %>%
+  ml_predict(copy_to(sc, data.frame(total_volume = seq(3e7, 6e7, 1e6)))) %>%
+  transmute(total_volume = total_volume, average_price = prediction) %>%
+  mutate(source = "predict") %>%
+  sdf_bind_rows(
+    select(avocado_spark, total_volume, average_price) %>%
+      mutate(source = "train")
+  ) %>%
+  collect() %>%
+  ggplot(aes(x = total_volume, y = average_price, col = source)) +
+  geom_point(alpha = 0.5)
+```
+
+# Correlations
+
+```{r}
+# Collecting the data we need
+library(corrr)
+
+corr_mat <- avocado_spark %>%
+  select(-c("x1", "date", "type", "region")) %>%
+  ml_corr() %>%
+  collect() 
+```
+
+```{r}
+# Cleaning up the correlation table
+corr_mat <- corr_mat %>%
+  mutate(rowname = names(corr_mat)) %>%
+  column_to_rownames(var = "rowname")
+
+corr_mat
+```
+
+```{r}
+corr_mat %>%
+  rplot(print_cor = TRUE)
+```
+
+# Spark Streaming
+
+```{r}
+# creates a folder called "input"
+dir.create("input")
+
+# Sampling 100 rows and writing the data as a .csv into the input folder.
+avocado %>%
+  sample_n(100) %>%
+  write_csv("input/avocados_1.csv")
+```
+
+# Spark Stream to check for changes
+
+```{r}
+stream <- stream_read_csv(sc, "input/") %>%
+    select(total_volume, average_price) %>%
+    stream_write_csv("output/")
+```
+
+# See if we have anything in the output dir.
+
+```{r}
+Sys.sleep(20) # add this just to give time for stream to run while knitting to html
+dir("output", pattern = ".csv")
+```
+
+* We do. Spark has processed the incoming csv and written an output csv. Let's write some more data to input.
+
+# More data to input
+
+```{r}
+avocado %>%
+  sample_n(100) %>%
+  write_csv("input/avocados_2.csv")
+```
+
+# Checking
+
+```{r}
+Sys.sleep(20) # add this just to give time for stream to run while knitting to html
+dir("output", pattern = ".csv")
+```
+
+* Now we have two .csv files. 
+
+# Stop Stream
+
+```{r}
+stream_stop(stream)
+```
+
+
+
+# Disconnecting from Spark
+
+```{r}
+# disconnect our individual connection
+spark_disconnect(sc)
+
+# or disconnect all open connections
+spark_disconnect_all()
 ```
 
