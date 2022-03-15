@@ -1,0 +1,71 @@
+---
+title: "spark_setup_work"
+author: "Jonny Nelson"
+date: "11/03/2022"
+output: html_document
+---
+
+# Installing sparklyr and Spark
+
+```{r}
+library(sparklyr)
+spark_install(version = "2.4.5")
+```
+
+# Testing the Spark Installation 
+
+```{r}
+sc <- spark_connect(master = "local")
+spark_cars <- copy_to(sc, mtcars)
+```
+# What other versions of Spark are avaliable?
+
+```{r}
+library("sparklyr")
+spark_available_versions(show_minor = TRUE)
+
+# Quite a number avaliable
+```
+
+# What version of Spark are we running
+
+```{r}
+spark_installed_versions()
+# Spark 2.4.5 
+```
+
+# Connect to Spark
+
+```{r}
+sc <- spark_connect(master = "local", version = "2.4.5")
+# Using our own computer as the master node of the Spark cluster and in this case it is the only node. Not very impressive :(
+```
+
+# Check out the connection object "sc"
+
+```{r}
+sc
+```
+
+* Not a very impressive show with just the one cluster running Spark. * We can however use AWK or Microsoft Azure to add slave nodes into our network for faster processing.
+* Can also create Droplets (nodes) on DigitalOcean, install Spark on these nodes and set up intracluster communications.
+* Alternatively use Docker to set up a cluster - easier option.
+* Databricks is free and sets up and runs instances for you on Azure and AWS. Great way to learn cloud computing! Own notebook format for using Spark also!!!
+
+# Using data with Spark
+
+```{r}
+library(tidyverse)
+library(janitor)
+
+avocado<- read_csv("data/avocado.csv")
+```
+
+# Copying the data over to Spark
+
+```{r}
+avocado <- avocado %>%
+  clean_names()
+avocado_spark <- copy_to(sc, avocado)
+```
+

@@ -1,0 +1,30 @@
+---
+title: "spark_setup_work"
+author: "Jonny Nelson"
+date: "11/03/2022"
+output: html_document
+---
+
+# Installing sparklyr and Spark
+
+```{r}
+library(sparklyr)
+spark_install(version = "2.4.5")
+```
+
+# Testing the Spark Installation 
+
+```{r}
+sc <- spark_connect(master = "local")
+spark_cars <- copy_to(sc, mtcars)
+```
+# What other versions of Spark are avaliable?
+
+```{r}
+library("sparklyr")
+spark_available_versions(show_minor = TRUE)
+
+# Quite a number avaliable
+```
+
+
