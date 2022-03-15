@@ -66,6 +66,83 @@ avocado<- read_csv("data/avocado.csv")
 ```{r}
 avocado <- avocado %>%
   clean_names()
-avocado_spark <- copy_to(sc, avocado)
+
+avocado_spark <- copy_to(sc, avocado, overwrite = TRUE)
+
+# Alternative way to load the csv into Spark
+# avocado_spark <- spark_read_csv(sc, path = "data/avocado.csv")
+```
+
+# Can also view tables in our Spark session 
+
+```{r}
+src_tbls(sc)
+```
+# Class of Spark Object
+
+```{r}
+class(avocado_spark)
+# We don't acquire the data until the processing need arises
+```
+
+# Let's see what the data contains 
+
+```{r}
+str(avocado_spark)
+# No data here
+```
+
+```{r}
+library(pryr)
+object_size(avocado)
+object.size(avocado_spark)
+```
+# Just getting one column
+
+```{r}
+selected_avocado_spark <- avocado_spark %>% 
+  select(average_price)
+
+object_size(selected_avocado_spark)
+```
+
+# Importing the data from Spark
+
+```{r}
+collected_avocado_spark <- avocado_spark %>%
+  collect()
+  
+object_size(collected_avocado_spark)
+```
+
+# Compute function to force Spark to run all operations and then store the resulting data in a Spark DataFrame.
+
+```{r}
+avocado_without_index <- avocado_spark %>%
+  select(-x1) %>%
+  compute("avocado_without_index")
+
+src_tbls(sc)
+
+# Can be useful to store summarised results without the whole data set coming through to R.
+```
+
+# Spark SQL and show_query()
+
+* Most dplyr operations are being converted to Spark SQL commands to be run on the Spark DataFrame - Let's see.
+
+```{r}
+avocado_without_index %>%
+  select(average_price) %>%
+  show_query()
+
+# Nice little SQL query there
+```
+
+
+
+```{r}
+library(DBI)
+dbGetQuery(conn = sc, statement = "SELECT COUNT(*) FROM avocado")
 ```
 
