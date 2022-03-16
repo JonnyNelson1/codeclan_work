@@ -1,0 +1,124 @@
+---
+title: "analysis_work"
+author: "Jonny Nelson"
+date: "16/03/2022"
+output: html_document
+---
+
+# Load Spark and Connect
+
+```{r}
+library("sparklyr")
+sc <- spark_connect(master = "local")
+```
+
+# Loading Packages and Data
+
+```{r}
+library(tidyverse)
+library(dbplot)
+library(car)
+
+prestige <- copy_to(sc, Prestige)
+```
+
+# Wrangling Data
+
+## Getting the mean where a variable is numeric
+
+```{r}
+prestige %>%
+  summarise_if(is.numeric, mean)
+```
+
+# Getting the SQL Query for above
+
+```{r}
+prestige %>%
+  summarise_if(is.numeric, mean) %>%
+  show_query()
+```
+
+## Getting the variance 
+
+```{r}
+prestige %>%
+  summarise_if(is.numeric, var) %>%
+  show_query()
+```
+
+## Normal dplyr pipes are completely integrated into Sparklyr
+
+```{r}
+prestige %>%
+  mutate(secondary_educated  = if_else(education > 7, "Yes", "No")) %>%
+  group_by(secondary_educated) %>%
+  summarise(mean_income = mean(income))
+```
+
+## Lets Check the SQL Query
+
+```{r}
+prestige %>%
+  mutate(secondary_educated  = if_else(education > 7, "Yes", "No")) %>%
+  group_by(secondary_educated) %>%
+  summarise(mean_income = mean(income)) %>%
+  show_query()
+```
+
+```{r}
+prestige %>%
+  select(income, education) %>%
+  glimpse()
+```
+
+```{r}
+tryCatch(
+  {prestige[, c("education", "income")] %>% glimpse()},
+  error = print
+)
+```
+
+```{r}
+tryCatch(
+  {Prestige[, c("education", "income")] %>% glimpse()},
+  error = print
+)
+```
+
+* NB: Select() function works as expected but the Square Bracket subsetting does not as noted above!!!
+
+# Spark in-built functions inside dplyr operations
+
+## Pick-n-Mix between Spark SQL and R
+
+```{r}
+prestige %>%
+  summarise(women_percentile = percentile(women, array(0.25, 0.5, 0.75))) %>%
+  mutate(
+    women_percentile = explode(women_percentile)
+    )
+
+# Spark Functions - percentile(), array() & explode()
+```
+## Let's see the SQL query
+
+```{r}
+prestige %>%
+  summarise(women_percentile = percentile(women, array(0.25, 0.5, 0.75))) %>%
+  mutate(women_percentile = explode(women_percentile)) %>%
+  show_query()
+```
+
+* Spark (or Hive) functions pass through unchanged
+
+## Task
+
+```{r}
+prestige %>%
+  group_by(type) %>%
+  summarise(mean = mean(income)) %>%
+  show_query()
+```
+
+# Visualisation
