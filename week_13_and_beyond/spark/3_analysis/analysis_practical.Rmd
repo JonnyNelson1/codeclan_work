@@ -122,3 +122,337 @@ prestige %>%
 ```
 
 # Visualisation
+
+## Correct way to use Collect()
+
+```{r}
+prestige %>%
+  group_by(type) %>%
+  summarise(number = n()) %>%
+  collect() %>%
+  ggplot(aes(x = type, y = number)) +
+  geom_col(col = "steelblue", alpha = 0.7)
+
+# Collect is getting summarised data - yay!
+```
+
+## Incorrect way to use Collect()
+
+```{r}
+prestige %>%
+  collect() %>%
+  group_by(type) %>%
+  summarise(number = n()) %>%
+  ggplot(aes(x = type, y = number)) +
+  geom_col(col = "steelblue", alpha = 0.7)
+
+# Collect is getting the whole data set and is unnecessary 
+```
+
+* Not always possible to get the summarised data, for example in the case of a scatter plot!
+
+* A better approach: raster plot using dbplot package. it's like a binned scatter plot
+
+## dbplot example
+
+```{r}
+prestige %>%
+  dbplot_raster(x = education, y = income, resolution = 100)
+```
+
+# sparklyr native interfaces
+
+* Spark is a lot stricter about the variable types passed than . . .
+* R and Python are dynamically typed languages
+
+```{r}
+x <- c(1,2,3,4)
+x <- "hi"
+```
+
+* Spark is statically typed
+* Variable types are assigned ahead of time
+
+## Spark data types
+
+```{r}
+schema <- sdf_schema(prestige)
+
+schema <- schema %>%
+  transpose() %>%
+  as_tibble() %>%
+  unnest(cols = c(name, type))
+
+schema
+```
+
+# Spark DataFrame Interface
+
+* Spark DF functions all start with sdf_: 
+
+* Sorting
+* Sampling
+* Partitioning
+* Binding
+
+## Sorting
+
+```{r}
+prestige %>%
+  sdf_sort(columns = "prestige") %>% 
+  head(20)
+```
+
+## Sampling
+
+```{r}
+downsampled_prestige <- prestige %>%
+  sdf_sample(fraction = 0.2, replacement = FALSE, seed = 42) %>%
+  compute("downsampled_prestige")
+
+downsampled_prestige
+```
+
+## Partitioning
+
+```{r}
+partitioned <- prestige %>%
+  sdf_random_split(training = 0.7, testing = 0.3)
+
+training <- partitioned$training %>%
+  compute("training")
+
+testing <- partitioned$testing %>%
+  compute("testing")
+
+training %>%
+  count()
+```
+
+* For Test-Train Splits
+
+## Binding
+
+* sdf_bind_rows() & sdf_bind_cols() same a dplyr verbs
+
+```{r}
+reassembled <- training %>%
+  sdf_bind_rows(testing)
+
+reassembled %>% 
+  count()
+```
+
+# MLlib Machine Learning Interface
+
+* ft_: Feature transformation functions
+* ml_: Machine Learning functions
+
+```{r}
+# Getting all associated funcitons
+ls("package:sparklyr", pattern = c("^ft"))
+ls("package:sparklyr", pattern = "^ml")
+```
+
+## ft_binarizer
+
+* takes continuous numeric and splits it into binary outcomes by comparison of each value with a threshold
+
+```{r}
+high_prestige <- prestige %>%
+  select(prestige) %>%
+  ft_binarizer("prestige", "has_high_prestige", threshold = 65) %>%
+  group_by(has_high_prestige) %>%
+  mutate(has_high_prestige = as.logical(has_high_prestige)) %>%
+  summarise(number = n()) %>%
+  collect()
+
+high_prestige %>%
+  ggplot(aes(x = has_high_prestige, y = number)) +
+  geom_col()
+```
+
+## ft_bucketizer
+
+* Comparable to the R cut() function
+* In cut() defaults to include the upper and exclude the lower bound
+* ft_bucketizer is the opposite
+
+## Example with cut()
+
+```{r}
+labels <- c("0 to 30", "30 to 60", "60 to 100")
+Prestige %>%
+  mutate(
+    women_buckets = cut(
+      women, 
+      breaks = c(0, 30, 60, 100), 
+      labels = labels,
+      right = FALSE,
+      include.lowest = TRUE
+    )
+  ) 
+```
+
+## ft_bucketizer
+
+```{r}
+prestige %>%
+  ft_bucketizer("women", "women_buckets", splits = c(0, 30, 60, 100)) %>%
+  distinct(women_buckets) %>%
+  collect()
+```
+
+* Returns labels 0,1 & 2
+
+## Count() Operation on the Spark side 
+
+```{r}
+prestige_women_buckets <- prestige %>%
+  ft_bucketizer("women", "women_buckets", splits = c(0, 30, 60, 100)) %>%
+  count(women_buckets) %>%
+  collect() %>%
+  mutate(women_buckets = factor(women_buckets, labels = labels))
+
+prestige_women_buckets
+```
+
+## ft_quantile_discretizer() - Quantile based Buckets!
+
+```{r}
+prestige_women_buckets <- prestige %>%
+  ft_quantile_discretizer("women", "women_buckets", num_buckets = 4) %>%
+  count(women_buckets) %>%
+  collect() %>%
+  mutate(women_buckets = factor(women_buckets, labels = c("0 - 25", "25 - 50", "50 -75", "75 - 100")))
+
+prestige_women_buckets
+```
+
+# Text Data
+
+## Reading Text files into Spark
+
+```{r}
+lotr <- spark_read_text(sc, name = "lotr", path = "data/lotr.txt" )
+lww <- spark_read_text(sc, name = "lww", path = "data/lww.txt")
+```
+
+## sdf_bind_rows() to bind both DF's together
+
+```{r}
+all_text <- lotr %>%
+  mutate(author = "tolkien") %>%
+  sdf_bind_rows(
+    lww %>%
+      mutate(author = "lewis")
+  ) %>%
+  filter(nchar(line) > 0) %>%
+  glimpse()
+```
+
+## Hive regexp_replace() function to remove punctuation and numbers:
+
+```{r}
+all_text <- all_text %>%
+  mutate(line = regexp_replace(line, "[_\"\'():;,.!?\\-]", " ")) %>%
+  mutate(line = regexp_replace(line, "[0-9]", ""))
+```
+
+## Tokenize the text and remove stopwords using ft_tokenizer:
+
+```{r}
+all_text <- all_text %>%
+  ft_tokenizer(input_col = "line", output_col = "word_list") %>%
+  ft_stop_words_remover(input_col = "word_list", output_col = "no_stop_word_list")
+
+head(all_text)
+```
+
+## Now use explode() function to pull words from the no_stop_word_list column and store the result in an intermediate DF on Spark
+
+```{r}
+all_text <- all_text %>%
+  select(author, no_stop_word_list) %>%
+  mutate(word = explode(no_stop_word_list)) %>%
+  select(-no_stop_word_list) %>%
+  filter(nchar(word) > 2) %>%
+  compute("all_text") %>%
+  glimpse()
+```
+
+## Count of the most frequent words used and the author who used them
+
+```{r}
+word_count <- all_text %>%
+  group_by(author, word) %>%
+  tally() %>%
+  arrange(desc(n)) 
+  
+word_count
+```
+
+## Finding words used by Tolkein and not used by Lewis
+
+```{r}
+tolkien_unique <- filter(word_count, author == "tolkien") %>%
+  anti_join(filter(word_count, author == "lewis"), by = "word") %>%
+  arrange(desc(n)) %>%
+  compute("tolkien_unique")
+
+tolkien_unique
+```
+
+## Use tidy format for looking at sentiment analysis 
+
+```{r}
+library(tidytext)
+library(textdata)
+
+afinn_scores <- get_sentiments("afinn")
+afinn_scores <- copy_to(sc, afinn_scores)
+
+afinn_scores %>%
+  glimpse()
+```
+
+## Mean positivity per word for each author
+
+```{r}
+all_text %>%
+  left_join(afinn_scores, by = "word") %>%
+  group_by(author) %>%
+  summarise(positivity_per_word = sum(value) / n())
+```
+
+* Lewis is on net quite a neutral
+* Tolkein is slightly positive - despite the Orcs!
+
+# Benchmarking Spark execution times
+
+* Microbenchmark offers a way of wrapping text and analysing its performance.
+
+```{r}
+library(microbenchmark)
+mb <- microbenchmark(
+  arranged = prestige %>%
+    arrange(income, women, education) %>%
+    collect(),
+  
+  sorted = prestige %>%
+    sdf_sort(c("income", "women", "education")) %>%
+    collect(),
+  
+  # Executed code 20 times
+  times = 20,
+  
+  # Random order and warming up by running each piece 10 times
+  control = list(
+    order = "random",
+    warmup = 10
+  )
+)
+
+print(mb)
+```
+
