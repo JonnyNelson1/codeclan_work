@@ -456,3 +456,23 @@ mb <- microbenchmark(
 print(mb)
 ```
 
+# Saving Data to Apache Parquet format
+
+* Often write intermediate data sets to file - Apache Parquet offers high performance columnar data storage well suited for Spark. 
+
+* Using the spark_write_parquet() function
+
+```{r}
+spark_write_parquet(prestige, "prestige_data")
+```
+
+```{r}
+prestige_again <- spark_read_parquet(sc, name = "prestige_again", path = "prestige_data") %>%
+  glimpse()
+```
+
+```{r}
+spark_write_parquet(lww, "lww")
+spark_read_parquet(sc, name = "LWP", path = "lww")
+```
+

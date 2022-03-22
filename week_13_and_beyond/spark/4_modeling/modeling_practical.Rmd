@@ -1,0 +1,249 @@
+---
+title: "modelling_practical"
+author: "Jonny Nelson"
+date: "17/03/2022"
+output: html_document
+---
+
+# Disconnecting from Spark Previous
+
+```{r}
+# disconnect our individual connection
+# spark_disconnect(sc)
+
+# or disconnect all open connections
+# spark_disconnect_all()
+```
+
+## Connecting the Spark and loading sparklyr
+
+```{r}
+library(sparklyr)
+sc <- spark_connect(master = "local")
+```
+
+## Loading the other libraries required
+
+```{r}
+library(tidyverse)
+```
+
+## Loading the data into Spark
+
+```{r}
+profiles <- spark_read_csv(
+  sc, 
+  "data/profiles.csv",
+  escape = "\"",
+  memory = FALSE,
+  options = list(multiline = TRUE)
+)
+
+glimpse(profiles)
+```
+
+* memory = FALSE, options = list(multiline = TRUE): To split the essay into 10 fields essay0 - essay9
+
+## Checking for NA values
+
+```{r}
+profiles %>%
+  summarise_all(.funs = ~ sum(as.integer(is.na(.)))) 
+```
+
+* We need to use as.integer() here, as we need to type-convert logical to integer as Spark is a statistical language.
+
+* A lot of NA's here
+
+### Leaving out the as.integer()
+
+```{r}
+profiles %>%
+  summarise_all(.funs = ~ sum(is.na(.)))
+```
+
+* Error as expected 
+
+```{r}
+profiles %>%
+  summarise(num_neg_income = sum(as.integer(income < 0)))
+```
+
+* A decent number of negative incomes as well
+
+# Split into Character and Numeric table for cleaning
+
+## Character Variable Table
+
+```{r}
+profiles_char <- profiles %>%
+  select(-c(age, income, height)) %>%
+  mutate_all(~ ifelse(is.na(.), "missing", .))
+```
+
+## Numeric variable Table
+
+```{r}
+profiles_num <- profiles %>%
+  select(age, income, height) %>%
+  mutate(
+    age = as.numeric(age),
+    income = ifelse(income == "-1", NA, as.numeric(income)),
+    height = as.numeric(height)
+  )
+```
+
+## sdf_bind Back Together
+
+```{r}
+profiles <- sdf_bind_cols(profiles_char, profiles_num) %>%
+  compute("profiles") %>%
+  glimpse()
+
+# The two tables split up no longer have the same number of rows!!! need to trouble shoot.
+```
+
+**The two tables split up no longer have the same number of rows!!! need to trouble shoot.**
+
+**At this point continuing on with the practical without running the code**
+
+## Another look at the NA values
+
+```{r}
+profiles %>%
+  summarise_all(~sum(as.integer(is.na(.))))
+```
+
+## Another look at negative income values
+
+```{r}
+profiles %>%
+  summarise(num_neg_income = sum(as.integer(income < 0)))
+```
+
+## Check of the profile schema 
+
+```{r}
+schema <- sdf_schema(profiles)
+
+schema <- schema %>%
+  transpose() %>%
+  as_tibble() %>%
+  unnest(cols = c(name, type))
+
+schema
+```
+
+## Exploring the categoricals: cross-tabulation
+
+```{r}
+contingency <- profiles %>%
+  sdf_crosstab("drinks", "drugs") %>%
+  collect()
+
+contingency
+```
+
+## Reording the Contingency Table above using fct_relevel()
+
+```{r}
+contingency %>%
+  rename(drinks = drinks_drugs) %>%
+  mutate(
+    drinks = as_factor(drinks) %>% 
+      fct_relevel("missing", "not at all", "rarely", "socially", "often",
+                  "very often", "desperately")
+  ) %>% 
+  arrange(drinks) %>%
+  select(drinks, missing, never, sometimes, often)
+```
+
+## Mutating the Response Variable in
+
+```{r}
+profiles <- profiles %>%
+  mutate(
+    not_working = as.integer(ifelse(job %in% c("student", "unemployed", "retired"), 1, 0))
+  )
+
+profiles %>%
+  count(not_working)
+```
+
+# Feature Engineering
+
+## Religion: Extracting words
+
+## Too many distinct observations to make Dummy Variables
+
+```{r}
+profiles %>%
+  distinct(religion)
+```
+
+## Extracting the first word out the character string
+
+```{r}
+profiles <- profiles %>%
+  mutate(religion = regexp_extract(religion, "[a-zA-Z]+", 0)) %>%
+  compute("profiles") %>%
+  glimpse()
+```
+
+## Does prop_not_working vary with religion
+
+```{r}
+profiles %>%
+  count(religion, not_working) %>%
+  group_by(religion) %>%
+  summarise(
+    count = sum(n),
+    prop_not_working = sum(not_working * n) / sum(n)
+  )
+```
+
+## Essays: Extracting total length
+
+```{r}
+profiles <- profiles %>%
+  mutate(
+    essay_length = char_length(paste(!!!syms(paste0("essay", 0:9))))
+  ) %>% 
+  compute("profiles") %>%
+  glimpse()
+```
+
+* syms() function with !!! operator to do the above.
+* Gives the character length of all essays put back together
+
+## Converting categoricals to dummies
+
+```{r}
+profiles <- profiles %>%
+    ft_string_indexer(
+    input_col = "drinks",
+    output_col = "drinks_indexed"
+  ) %>%
+  ft_one_hot_encoder(
+    input_cols = "drinks_indexed",
+    output_cols = "drinks_encoded"
+  ) %>%
+  ft_string_indexer(
+    input_col = "drugs",
+    output_col = "drugs_indexed"
+  ) %>%
+  ft_one_hot_encoder(
+    input_cols = "drugs_indexed",
+    output_cols = "drugs_encoded"
+  ) %>%
+  ft_string_indexer(
+    input_col = "status",
+    output_col = "status_indexed"
+  ) %>%
+  ft_one_hot_encoder(
+    input_cols = "status_indexed",
+    output_cols = "status_encoded"
+  ) %>%
+  compute("profiles")
+```
+
