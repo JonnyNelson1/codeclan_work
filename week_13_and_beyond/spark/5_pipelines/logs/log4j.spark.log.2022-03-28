@@ -1,0 +1,153 @@
+22/03/28 14:57:49 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.rpc.RpcTimeoutException: Futures timed out after [10000 milliseconds]. This timeout is controlled by spark.executor.heartbeatInterval
+	at org.apache.spark.rpc.RpcTimeout.org$apache$spark$rpc$RpcTimeout$$createRpcTimeoutException(RpcTimeout.scala:47)
+	at org.apache.spark.rpc.RpcTimeout$$anonfun$addMessageIfTimeout$1.applyOrElse(RpcTimeout.scala:62)
+	at org.apache.spark.rpc.RpcTimeout$$anonfun$addMessageIfTimeout$1.applyOrElse(RpcTimeout.scala:58)
+	at scala.runtime.AbstractPartialFunction.apply(AbstractPartialFunction.scala:36)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:76)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:92)
+	at org.apache.spark.executor.Executor.org$apache$spark$executor$Executor$$reportHeartBeat(Executor.scala:846)
+	at org.apache.spark.executor.Executor$$anon$2$$anonfun$run$1.apply$mcV$sp(Executor.scala:875)
+	at org.apache.spark.executor.Executor$$anon$2$$anonfun$run$1.apply(Executor.scala:875)
+	at org.apache.spark.executor.Executor$$anon$2$$anonfun$run$1.apply(Executor.scala:875)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1945)
+	at org.apache.spark.executor.Executor$$anon$2.run(Executor.scala:875)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:308)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$301(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:294)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: java.util.concurrent.TimeoutException: Futures timed out after [10000 milliseconds]
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:223)
+	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:227)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:220)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	... 14 more
+22/03/28 14:57:59 WARN Executor: Issue communicating with driver in heartbeater
+org.apache.spark.rpc.RpcTimeoutException: Futures timed out after [10000 milliseconds]. This timeout is controlled by spark.executor.heartbeatInterval
+	at org.apache.spark.rpc.RpcTimeout.org$apache$spark$rpc$RpcTimeout$$createRpcTimeoutException(RpcTimeout.scala:47)
+	at org.apache.spark.rpc.RpcTimeout$$anonfun$addMessageIfTimeout$1.applyOrElse(RpcTimeout.scala:62)
+	at org.apache.spark.rpc.RpcTimeout$$anonfun$addMessageIfTimeout$1.applyOrElse(RpcTimeout.scala:58)
+	at scala.runtime.AbstractPartialFunction.apply(AbstractPartialFunction.scala:36)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:76)
+	at org.apache.spark.rpc.RpcEndpointRef.askSync(RpcEndpointRef.scala:92)
+	at org.apache.spark.executor.Executor.org$apache$spark$executor$Executor$$reportHeartBeat(Executor.scala:846)
+	at org.apache.spark.executor.Executor$$anon$2$$anonfun$run$1.apply$mcV$sp(Executor.scala:875)
+	at org.apache.spark.executor.Executor$$anon$2$$anonfun$run$1.apply(Executor.scala:875)
+	at org.apache.spark.executor.Executor$$anon$2$$anonfun$run$1.apply(Executor.scala:875)
+	at org.apache.spark.util.Utils$.logUncaughtExceptions(Utils.scala:1945)
+	at org.apache.spark.executor.Executor$$anon$2.run(Executor.scala:875)
+	at java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:511)
+	at java.util.concurrent.FutureTask.runAndReset(FutureTask.java:308)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.access$301(ScheduledThreadPoolExecutor.java:180)
+	at java.util.concurrent.ScheduledThreadPoolExecutor$ScheduledFutureTask.run(ScheduledThreadPoolExecutor.java:294)
+	at java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1149)
+	at java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:624)
+	at java.lang.Thread.run(Thread.java:748)
+Caused by: java.util.concurrent.TimeoutException: Futures timed out after [10000 milliseconds]
+	at scala.concurrent.impl.Promise$DefaultPromise.ready(Promise.scala:223)
+	at scala.concurrent.impl.Promise$DefaultPromise.result(Promise.scala:227)
+	at org.apache.spark.util.ThreadUtils$.awaitResult(ThreadUtils.scala:220)
+	at org.apache.spark.rpc.RpcTimeout.awaitResult(RpcTimeout.scala:75)
+	... 14 more
+22/03/28 14:58:03 WARN NettyRpcEnv: Ignored message: HeartbeatResponse(false)
+22/03/28 14:58:03 WARN NettyRpcEnv: Ignored message: HeartbeatResponse(false)
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 158
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 160
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 189
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 176
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 181
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 128
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 106
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 120
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 136
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 102
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 139
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 113
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 114
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 171
+22/03/28 14:58:03 INFO BlockManagerInfo: Removed broadcast_5_piece0 on 127.0.0.1:55416 in memory (size: 3.9 KB, free: 890.3 MB)
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 169
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 179
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 122
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 112
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 151
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 142
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 149
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned shuffle 1
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 109
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 129
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 101
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 167
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 170
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 146
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 182
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 118
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 131
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 157
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 119
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 155
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 111
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 125
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 134
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 187
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 166
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 154
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 191
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 124
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 141
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 148
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 117
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 123
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 173
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 127
+22/03/28 14:58:03 INFO BlockManagerInfo: Removed broadcast_6_piece0 on 127.0.0.1:55416 in memory (size: 3.5 KB, free: 890.3 MB)
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 116
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 190
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 192
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 185
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 150
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 103
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 105
+22/03/28 14:58:03 INFO BlockManagerInfo: Removed broadcast_4_piece0 on 127.0.0.1:55416 in memory (size: 21.8 KB, free: 890.3 MB)
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 184
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 175
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 121
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 186
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 177
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 152
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 174
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 140
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 144
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 172
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 126
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 143
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 145
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 138
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 161
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 163
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 153
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 178
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 115
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 165
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 137
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 130
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 147
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 132
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 180
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 159
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 168
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 133
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 107
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 104
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 162
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 193
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 108
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 135
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 110
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 188
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 164
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 156
+22/03/28 14:58:03 INFO ContextCleaner: Cleaned accumulator 183
